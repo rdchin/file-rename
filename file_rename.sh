@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-VERSION="2017-03-15 12:20"
+VERSION="2017-06-28 13:42"
 #
 # Summary:
 #
@@ -25,6 +25,16 @@ VERSION="2017-03-15 12:20"
 # 
 #
 #@ CODE HISTORY
+#@
+#@ 2018-06-28 *Add the "-verbose" option to the "rename" command "rename -verbose 's/search-string/replacement-string/g' $1/* |  tee -a $LOG_FILE".
+#@
+#@ 2018-06-07 *Rewrote script to use the rename command with a wild card
+#@             for the filename. It is much faster than using
+#@             "find -exec rename".
+#@             Change from:
+#@             find -H [directory] [-maxdepth 1] -type f -exec rename -v "s/$1/$2/g" {} \;  | tee -a $LOG_FILE
+#@             Change to:
+#@             rename 's/search-string/replacement-string/g' $1/* |  tee -a $LOG_FILE
 #@
 #@ 2017-03-10 *Main Program, added script title and version comment.
 #@
@@ -81,44 +91,6 @@ f_banner () {
 # End of function f_banner
 #
 # +----------------------------------------+
-# |        Function find_and_delete        |
-# +----------------------------------------+
-#
-#  Inputs: $1=Find string (to delete).
-#          $2=TARGET_DIR.
-#          $3=find options.
-#          $4=find options.
-#          $5=rename options.
-#          LOG_FILE.
-#    Uses: None.
-# Outputs: None.
-#
-f_find_and_delete () {
-      find -H $2 $3 $4 -type f -exec rename -v $5 "s/$1//g" {} \;  | tee -a $LOG_FILE
-} # End of function f_find_and_delete
-#
-# +----------------------------------------+
-# |        Function find_and_replace       |
-# +----------------------------------------+
-#
-#  Inputs: $1=Find string.
-#          $2=Replacement string.
-#          $3=TARGET_DIR
-#          $4=find options.
-#          $5=find options.
-#          $6=rename options.
-#          LOG_FILE.
-#    Uses: None.
-# Outputs: None.
-#
-f_find_and_replace () {
-      find -H $3 $4 $5 -type f -exec rename -v $6 "s/$1/$2/g" {} \;  | tee -a $LOG_FILE
-      #
-      # find -H $3 -type f -exec rename -n "s/$1/$2/g" {} \; | tee -a $LOG_FILE  # -n no action by rename.
-      # find -H $3 -type f -exec rename "s/$1/$2/g" {} \; 2>&1 | tee -a $LOG_FILE  # log only errors.
-} # End of function f_find_and_replace
-#
-# +----------------------------------------+
 # | Function f_press_enter_key_to_continue |
 # +----------------------------------------+
 #
@@ -144,11 +116,11 @@ f_press_enter_key_to_continue () { # Display message and wait for user input.
 #
 f_abort() {
       echo $(tput setaf 1) # Set font to color red.
-      echo >&2 "***************"
-      echo >&2 "*** ABORTED ***"
-      echo >&2 "***************"
-      echo
-      echo "An error occurred. Exiting..." >&2
+      echo >&2 "***************" |  tee -a $LOG_FILE*
+      echo >&2 "*** ABORTED ***" |  tee -a $LOG_FILE*
+      echo >&2 "***************" |  tee -a $LOG_FILE*
+      echo |  tee -a $LOG_FILE*
+      echo "An error occurred. Exiting..." >&2 |  tee -a $LOG_FILE*
       exit 1
       echo -n $(tput sgr0) # Set font to normal color.
 } # End of function f_abort
@@ -165,84 +137,8 @@ f_abort() {
 # Outputs: None.
 #
 #
-# Note: The rename command with the -n option prevents actual renaming of files
-#      in order to perform a test simulation.
-# Do a test simulation of the find-rename command.
-# find . -type f -exec rename -n 's/\ /\_/g' {} \; | tee -a $LOG_FILE
-#
-# Remove the "-n" option to perform the actual renaming of files.
-# find . -type f -exec rename 's/\ /\_/g' {} \; | tee -a $LOG_FILE
-#
 LOG_FILE="file_rename.log"
 LOG_FILE="$(date +%Y%m%d-%H%M)_$LOG_FILE"
-#
-if [ -z $1 ] ; then
-   echo
-   echo "!!!WARNING!!! No target directory was specified."
-   echo "Usage: bash file_rename.sh <Target Directory name>"
-   echo
-   echo -n $(tput setaf 1) # Set font to color red.
-   f_abort
-fi
-#
-if [ ! -d $1 ] ; then
-   echo
-   echo -n $(tput setaf 1) # Set font to color red.
-   echo "!!!WARNING!!! Cannot continue, $1 directory either does not exist"
-   echo "or you do not have WRITE permission to the directory: $1."
-   f_abort
-fi
-#
-TARGET_DIR=$1
-#
-# clear # Blank the screen.
-#
-SIM=""
-ROPTIONS=""
-#
-while [  "$SIM" != "1" -a "$SIM" != "0" ]
-      do
-         echo "Script: file_rename ver. $VERSION"
-         echo
-         echo -n "Do you wish to do a simulation of renaming files? y/N/(q)uit: " ; read SIM
-         #
-         case $SIM in
-              [Yy] | [Yy][Ee] | [Yy][Ee][Ss])
-              SIM=1
-              ROPTIONS="-n"
-              ;;
-              "" | [Nn] | [Nn][Oo])
-              SIM=0
-              ;;
-              [Qq] | [Qq][Uu] | [Qq][Uu][Ii] | [Qq][Uu][Ii][Tt])
-              f_abort
-              ;;
-         esac
-     done
-#
-RECUR=""
-FOPTIONS=""
-#
-while [  "$RECUR" != "1" -a "$RECUR" != "0" ]
-      do
-         echo
-         echo "Target Directory: $TARGET_DIR"
-         echo
-         echo -n "Recursively rename all files in sub-folders? (Takes more time) (Y/n/(q)uit: " ; read RECUR
-         #
-         case $RECUR in
-              "" | [Yy] | [Yy][Ee] | [Yy][Ee][Ss])
-              RECUR=1
-              ;;
-              [Nn] | [Nn][Oo])
-              RECUR=0
-              FOPTIONS="-maxdepth 1"
-              ;;
-              [Qq] | [Qq][Uu] | [Qq][Uu][Ii] | [Qq][Uu][Ii][Tt])
-              f_abort
-              ;;
-         esac
-     done
 #
 # Create date stamp header for log file.
 echo -n "Start time: " | tee $LOG_FILE
@@ -265,76 +161,80 @@ date  | tee -a $LOG_FILE
 # The order of operations below is important especially for the "find and replace" operations.
 #
 # 1. Replace <colon><space> with <two-dashes> in file name.
-f_banner "18 of 18 Replace <colon><space> with <two-dashes> in file name"
-f_find_and_replace ": " "--" $TARGET_DIR $FOPTIONS $ROPTIONS
+f_banner "19 of 19 Replace <colon><space> with <two-dashes> in file name"
+rename -verbose 's/: /--/g' $1/* |  tee -a $LOG_FILE
 #
 # 2. Replace <colon> with <underscore> in file name.
-f_banner "17 of 18 Replace <colon> with <underscore> in file name"
-f_find_and_replace ":" "_" $TARGET_DIR $FOPTIONS $ROPTIONS
+f_banner "18 of 19 Replace <colon> with <underscore> in file name"
+rename -verbose 's/:/_/g' $1/* |  tee -a $LOG_FILE
 #
 # 3. Replace <space> with <underscore> in file name.
-f_banner "16 of 18 Replace <space> with <underscore> in file name"
-f_find_and_replace " " "_" $TARGET_DIR $FOPTIONS $ROPTIONS
+f_banner "17 of 19 Replace <space> with <underscore> in file name"
+rename -verbose 's/ /_/g' $1/* |  tee -a $LOG_FILE
 #
 # 4. Replace <double-dash> with <two-dashes> in file name.
-f_banner "15 of 18 Replace <double-dash> with <two-dashes> in file name"
-f_find_and_replace "—" "--" $TARGET_DIR $FOPTIONS $ROPTIONS
+f_banner "16 of 19 Replace <double-dash> with <two-dashes> in file name"
+rename -verbose 's/—/--/g' $1/* |  tee -a $LOG_FILE
 #
 # 5. Remove <exclamation-mark> in file name.
-f_banner "14 of 18 Remove <exclamation-mark> in file name"
-f_find_and_delete "!" $TARGET_DIR $FOPTIONS $ROPTIONS
+f_banner "15 of 19 Remove <exclamation-mark> in file name"
+rename -verbose 's/!//g' $1/* |  tee -a $LOG_FILE
 #
 # 6. Remove <question-mark> in file name.
-f_banner "13 of 18 Remove <question-mark> in file name"
-f_find_and_delete "\?" $TARGET_DIR $FOPTIONS $ROPTIONS
+f_banner "14 of 19 Remove <question-mark> in file name"
+rename -verbose 's/\?//g' $1/* |  tee -a $LOG_FILE
 #
 # 6. Remove <percent-sign> in file name.
-f_banner "12 of 18 Remove <percent-sign> in file name"
-f_find_and_delete "%" $TARGET_DIR $FOPTIONS $ROPTIONS
+f_banner "13 of 19 Remove <percent-sign> in file name"
+rename -verbose 's/%//g' $1/* |  tee -a $LOG_FILE
 #
 # 6. Remove <ampersand> in file name.
-f_banner "11 of 18 Remove <ampersand> in file name"
-f_find_and_delete "&" $TARGET_DIR $FOPTIONS $ROPTIONS
+f_banner "12 of 19 Remove <ampersand> in file name"
+rename -verbose 's/\&//g' $1/* |  tee -a $LOG_FILE
 #
 # 7. Remove <single-quote> in file name.
-f_banner "10 of 18 Remove <single-quote> in file name"
-f_find_and_delete "'" $TARGET_DIR $FOPTIONS $ROPTIONS
+f_banner "11 of 19 Remove <single-quote> in file name"
+rename "s/\'//g" $1/* |  tee -a $LOG_FILE
 #
 # 8. Remove <single-right-quote> in file name.
-f_banner "09 of 18 Remove <single-right-quote> in file name"
-f_find_and_delete "’" $TARGET_DIR $FOPTIONS $ROPTIONS
+f_banner "10 of 19 Remove <single-right-quote> in file name"
+rename -verbose 's/’//g' $1/* |  tee -a $LOG_FILE
 #
 # 9. Remove <double-quote> in file name.
-f_banner "08 of 18 Remove <double-quote> in file name"
-f_find_and_delete "\"" $TARGET_DIR $FOPTIONS $ROPTIONS
+f_banner "09 of 19 Remove <double-quote> in file name"
+rename -verbose 's/\"//g' $1/* |  tee -a $LOG_FILE
 #
 # 10. Remove <right-double-quote> in file name.
-f_banner "07 of 18 Remove <right-double-quote> in file name"
-f_find_and_delete "”" $TARGET_DIR $FOPTIONS $ROPTIONS
+f_banner "08 of 19 Remove <right-double-quote> in file name"
+rename -verbose 's/”//g' $1/* |  tee -a $LOG_FILE
 #
 # 11. Remove <left-double-quote> in file name.
-f_banner "06 of 18 Remove <left-double-quote> in file name"
-f_find_and_delete "“" $TARGET_DIR $FOPTIONS $ROPTIONS
+f_banner "07 of 19 Remove <left-double-quote> in file name"
+rename -verbose 's/“//g' $1/* |  tee -a $LOG_FILE
 #
 # 12. Replace <underscore-period>  with <period> in file name.
-f_banner "05 of 18 Replace <underscore-period>  with <period> in file name"
-f_find_and_replace "_\." "." $TARGET_DIR $FOPTIONS $ROPTIONS
+f_banner "06 of 19 Replace <underscore-period>  with <period> in file name"
+rename -verbose 's/_\././g' $1/* |  tee -a $LOG_FILE
 #
 # 13. Replace <triple-underscore> with <underscore> in file name.
-f_banner "04 of 18 Replace <triple-underscore> with <underscore> in file name"
-f_find_and_replace "___" "_" $TARGET_DIR $FOPTIONS $ROPTIONS
+f_banner "05 of 19 Replace <triple-underscore> with <underscore> in file name"
+rename -verbose 's/___/_/g' $1/* |  tee -a $LOG_FILE
 # 
 # 14. Replace <double-underscore> with <underscore> in file name.
-f_banner "03 of 18 Replace <double-underscore> with <underscore> in file name"
-f_find_and_replace "__" "_" $TARGET_DIR $FOPTIONS $ROPTIONS
+f_banner "04 of 19 Replace <double-underscore> with <underscore> in file name"
+rename -verbose 's/__/_/g' $1/* |  tee -a $LOG_FILE
 #
-# 15. Replace <two-dashes><underscore> with <two-dashes> in file name.
-f_banner "02 of 18 Replace <two-dashes><underscore> with <two-dashes> in file name."
-f_find_and_replace "--_" "--" $TARGET_DIR $FOPTIONS $ROPTIONS
+# 15. Repeat Replace <double-underscore> with <underscore> in file name.
+f_banner "03 of 19 Repeat Replace <double-underscore> with <underscore> in file name"
+rename -verbose 's/__/_/g' $1/* |  tee -a $LOG_FILE
 #
-# 16. Replace <underscore><two-dashes> with <two-dashes> in file name.
-f_banner "01 of 18 Replace <underscore><two-dashes> with <two-dashes> in file name."
-f_find_and_replace "_--" "--" $TARGET_DIR $FOPTIONS $ROPTIONS
+# 16. Replace <two-dashes><underscore> with <two-dashes> in file name.
+f_banner "02 of 19 Replace <two-dashes><underscore> with <two-dashes> in file name."
+rename -verbose 's/--_/--/g' $1/* |  tee -a $LOG_FILE
+#
+# 17. Replace <underscore><two-dashes> with <two-dashes> in file name.
+f_banner "01 of 19 Replace <underscore><two-dashes> with <two-dashes> in file name."
+rename -verbose 's/_--/--/g' $1/* |  tee -a $LOG_FILE
 #
 echo -n "Finish time: " | tee -a $LOG_FILE
 date  | tee -a $LOG_FILE
