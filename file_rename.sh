@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-VERSION="2019-04-07 00:45"
+VERSION="2019-04-29 14:57"
 #
 # Summary:
 #
@@ -25,6 +25,9 @@ VERSION="2019-04-07 00:45"
 # 
 #
 #@ CODE HISTORY
+#@
+#@ 2019-04-29 *Main Program deleted substitution of strings containing
+#@             forward-slash or back-slash to prevent file directory corruption.
 #@
 #@ 2019-04-08 *Main Program added more substitution strings.
 #@
@@ -169,8 +172,8 @@ date  | tee -a $LOG_FILE
 # % percent       --DONE      > right angle bracket --DONE      ! exclamation point --DONE      ` backtick   --DONE
 # & ampersand     --DONE      * asterisk            --DONE      ' single quotes     --DONE      | pipe       --DONE
 # { left bracket  --DONE      ? question mark       --DONE      " double quotes     --DONE      = equal sign --DONE
-# } right bracket --DONE      / forward slash       --DONE      : colon             --DONE
-# \ back slash    --DONE      blank spaces          --DONE      @ at sign           --DONE
+# } right bracket --DONE      / forward slash       (NEVER)     : colon             --DONE
+# \ back slash    (NEVER)      blank spaces         --DONE      @ at sign           --DONE
 #
 # The order of operations below is important especially for the "find and replace" operations.
 #
@@ -258,13 +261,13 @@ rename -verbose 's/\}//g' $1/* |  tee -a $LOG_FILE
 f_banner "13 of 33 Remove <left-bracket> in file name"
 rename -verbose 's/\{//g' $1/* |  tee -a $LOG_FILE
 #
-# 22. Remove <forward-slash> in file name.
-f_banner "12 of 33 Remove <forward-slash> in file name"
-rename -verbose 's/\///g' $1/* |  tee -a $LOG_FILE
+# 22. NEVER Remove <forward-slash> in file name. It will change directory of file.
+f_banner "12 of 33 NEVER Remove <forward-slash> in file name"
+#rename -verbose 's/\///g' $1/* |  tee -a $LOG_FILE
 #
-# 23. Remove <back-slash> in file name.
-f_banner "11 of 33 Remove <back-slash> in file name"
-rename -verbose 's/\\//g' $1/* |  tee -a $LOG_FILE
+# 23. NEVER Remove <back-slash> in file name. It will change directory of file.
+f_banner "11 of 33 NEVER Remove <back-slash> in file name"
+#rename -verbose 's/\\//g' $1/* |  tee -a $LOG_FILE
 #
 # 24. Remove <right-angle-bracket> in file name.
 f_banner "10 of 33 Remove <right-angle-bracket> in file name"
