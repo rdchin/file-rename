@@ -2,6 +2,9 @@
 #
 VERSION="2019-04-29 14:57"
 #
+#   Usage: bash file_rename.sh <TARGET DIRECTORY>
+#          bash file_rename.sh /home/user/Documents
+#
 # Summary:
 #
 # If you save articles from web pages as PDF files and use the title 

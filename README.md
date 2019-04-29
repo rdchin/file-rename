@@ -1,4 +1,4 @@
-#   Usage: bash file_rename.sh <TARGET DIRECTORY>
+#   Usage: bash file_rename.sh [ TARGET DIRECTORY ]
 #          bash file_rename.sh /home/user/Documents
 #
 # Summary:
