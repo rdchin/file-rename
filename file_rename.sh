@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-VERSION="2019-04-29 14:57"
+VERSION="2019-05-08 17:17"
 #
 #   Usage: bash file_rename.sh <TARGET DIRECTORY>
 #          bash file_rename.sh /home/user/Documents
@@ -28,6 +28,12 @@ VERSION="2019-04-29 14:57"
 # 
 #
 #@ CODE HISTORY
+#@
+#@ 2019-05-08 *Main Program added directory name to the log file.
+#@            *Main Program changed name of the log file
+#@             From: file_rename_<YYYYMMDD-HHMM>
+#@               To: file_rename_<YYYYMMDD-HHMM.SSNNNNNNNNN>.
+#@            *Main Program unset LOG_FILE at end of script.
 #@
 #@ 2019-04-29 *Main Program deleted substitution of strings containing
 #@             forward-slash or back-slash to prevent file directory corruption.
@@ -87,15 +93,12 @@ VERSION="2019-04-29 14:57"
 # |            Function f_banner           |
 # +----------------------------------------+
 #
-#  Inputs: $1=String.
+#  Inputs: $1=String, LOG_FILE.
 #    Uses: None.
 # Outputs: None.
 #
 f_banner () {
       BANNER=$1
-      if [ "$SIM" = 1 ] ; then 
-         BANNER="Simulate $1"
-      fi
       echo | tee -a $LOG_FILE
       echo "   $BANNER" | tee -a $LOG_FILE
       echo -n "   Start time: " | tee -a $LOG_FILE
@@ -123,7 +126,7 @@ f_press_enter_key_to_continue () { # Display message and wait for user input.
 # |            Function f_abort            |
 # +----------------------------------------+
 #
-#  Inputs: None.
+#  Inputs: LOG_FILE.
 #    Uses: None.
 # Outputs: None.
 #
@@ -150,11 +153,10 @@ f_abort() {
 # Outputs: None.
 #
 #
-LOG_FILE="file_rename.log"
-LOG_FILE="$(date +%Y%m%d-%H%M)_$LOG_FILE"
+LOG_FILE="file_rename_$(date +%Y%m%d-%H%M.%S%N).log"
 #
 # Create date stamp header for log file.
-echo -n "Start time: " | tee $LOG_FILE
+echo -n "Start time for renaming files in directory $1: " | tee $LOG_FILE
 date  | tee -a $LOG_FILE
 #
 # Compatible file names for most Operating Systems.
@@ -181,71 +183,71 @@ date  | tee -a $LOG_FILE
 # The order of operations below is important especially for the "find and replace" operations.
 #
 # 1. Replace <colon><space> with <two-dashes> in file name.
-f_banner "33 of 33 Replace <colon><space> with <two-dashes> in file name"
+f_banner "33 of 33 Replace <colon><space> with <two-dashes> in $1/file name."
 rename -verbose 's/: /--/g' $1/* |  tee -a $LOG_FILE
 #
 # 2. Replace <colon> with <underscore> in file name.
-f_banner "32 of 33 Replace <colon> with <underscore> in file name"
+f_banner "32 of 33 Replace <colon> with <underscore> in $1/file name."
 rename -verbose 's/:/_/g' $1/* |  tee -a $LOG_FILE
 #
 # 3. Replace <space> with <underscore> in file name.
-f_banner "31 of 33 Replace <space> with <underscore> in file name"
+f_banner "31 of 33 Replace <space> with <underscore> in $1/file name."
 rename -verbose 's/ /_/g' $1/* |  tee -a $LOG_FILE
 #
 # 4. Replace <double-dash> with <two-dashes> in file name.
-f_banner "30 of 33 Replace <double-dash> with <two-dashes> in file name"
+f_banner "30 of 33 Replace <double-dash> with <two-dashes> in $1/file name."
 rename -verbose 's/—/--/g' $1/* |  tee -a $LOG_FILE
 #
 # 5. Remove <exclamation-mark> in file name.
-f_banner "29 of 33 Remove <exclamation-mark> in file name"
+f_banner "29 of 33 Remove <exclamation-mark> in $1/file name."
 rename -verbose 's/!//g' $1/* |  tee -a $LOG_FILE
 #
 # 6. Remove <question-mark> in file name.
-f_banner "28 of 33 Remove <question-mark> in file name"
+f_banner "28 of 33 Remove <question-mark> in $1/file name."
 rename -verbose 's/\?//g' $1/* |  tee -a $LOG_FILE
 #
 # 7. Remove <percent-sign> in file name.
-f_banner "27 of 33 Remove <percent-sign> in file name"
+f_banner "27 of 33 Remove <percent-sign> in $1/file name."
 rename -verbose 's/%//g' $1/* |  tee -a $LOG_FILE
 #
 # 8. Remove <ampersand> in file name.
-f_banner "26 of 33 Remove <ampersand> in file name"
+f_banner "26 of 33 Remove <ampersand> in $1/file name."
 rename -verbose 's/\&//g' $1/* |  tee -a $LOG_FILE
 #
 # 9. Remove <single-quote> in file name.
-f_banner "25 of 33 Remove <single-quote> in file name"
+f_banner "25 of 33 Remove <single-quote> in $1/file name."
 rename "s/\'//g" $1/* |  tee -a $LOG_FILE
 #
 # 10. Remove <single-right-quote> in file name.
-f_banner "24 of 33 Remove <single-right-quote> in file name"
+f_banner "24 of 33 Remove <single-right-quote> in $1/file name."
 rename -verbose 's/’//g' $1/* |  tee -a $LOG_FILE
 #
 # 11. Remove <double-quote> in file name.
-f_banner "23 of 33 Remove <double-quote> in file name"
+f_banner "23 of 33 Remove <double-quote> in $1/file name."
 rename -verbose 's/\"//g' $1/* |  tee -a $LOG_FILE
 #
 # 12. Remove <right-double-quote> in file name.
-f_banner "22 of 33 Remove <right-double-quote> in file name"
+f_banner "22 of 33 Remove <right-double-quote> in $1/file name."
 rename -verbose 's/”//g' $1/* |  tee -a $LOG_FILE
 #
 # 13. Remove <left-double-quote> in file name.
-f_banner "21 of 33 Remove <left-double-quote> in file name"
+f_banner "21 of 33 Remove <left-double-quote> in $1/file name."
 rename -verbose 's/“//g' $1/* |  tee -a $LOG_FILE
 #
 # 14. Replace <underscore-period>  with <period> in file name.
-f_banner "20 of 33 Replace <underscore-period>  with <period> in file name"
+f_banner "20 of 33 Replace <underscore-period>  with <period> in $1/file name."
 rename -verbose 's/_\././g' $1/* |  tee -a $LOG_FILE
 #
 # 15. Replace <triple-underscore> with <underscore> in file name.
-f_banner "19 of 33 Replace <triple-underscore> with <underscore> in file name"
+f_banner "19 of 33 Replace <triple-underscore> with <underscore> in $1/file name."
 rename -verbose 's/___/_/g' $1/* |  tee -a $LOG_FILE
 # 
 # 16. Replace <double-underscore> with <underscore> in file name.
-f_banner "18 of 33 Replace <double-underscore> with <underscore> in file name"
+f_banner "18 of 33 Replace <double-underscore> with <underscore> in $1/file name."
 rename -verbose 's/__/_/g' $1/* |  tee -a $LOG_FILE
 #
 # 17. Repeat Replace <double-underscore> with <underscore> in file name.
-f_banner "17 of 33 Repeat Replace <double-underscore> with <underscore> in file name"
+f_banner "17 of 33 Repeat Replace <double-underscore> with <underscore> in $1/file name."
 rename -verbose 's/__/_/g' $1/* |  tee -a $LOG_FILE
 #
 # 18. Replace <two-dashes><underscore> with <two-dashes> in file name.
@@ -257,60 +259,63 @@ f_banner "15 of 33 Replace <underscore><two-dashes> with <two-dashes> in file na
 rename -verbose 's/_--/--/g' $1/* |  tee -a $LOG_FILE
 #
 # 20. Remove <right-bracket> in file name.
-f_banner "14 of 33 Remove <right-bracket> in file name"
+f_banner "14 of 33 Remove <right-bracket> in $1/file name."
 rename -verbose 's/\}//g' $1/* |  tee -a $LOG_FILE
 #
 # 21. Remove <left-bracket> in file name.
-f_banner "13 of 33 Remove <left-bracket> in file name"
+f_banner "13 of 33 Remove <left-bracket> in $1/file name."
 rename -verbose 's/\{//g' $1/* |  tee -a $LOG_FILE
 #
 # 22. NEVER Remove <forward-slash> in file name. It will change directory of file.
-f_banner "12 of 33 NEVER Remove <forward-slash> in file name"
+f_banner "12 of 33 NEVER Remove <forward-slash> in $1/file name."
 #rename -verbose 's/\///g' $1/* |  tee -a $LOG_FILE
 #
 # 23. NEVER Remove <back-slash> in file name. It will change directory of file.
-f_banner "11 of 33 NEVER Remove <back-slash> in file name"
+f_banner "11 of 33 NEVER Remove <back-slash> in $1/file name."
 #rename -verbose 's/\\//g' $1/* |  tee -a $LOG_FILE
 #
 # 24. Remove <right-angle-bracket> in file name.
-f_banner "10 of 33 Remove <right-angle-bracket> in file name"
+f_banner "10 of 33 Remove <right-angle-bracket> in $1/file name."
 rename -verbose 's/\>//g' $1/* |  tee -a $LOG_FILE
 #
 # 25. Remove <left-angle-bracket> in file name.
-f_banner "09 of 33 Remove <left-angle-bracket> in file name"
+f_banner "09 of 33 Remove <left-angle-bracket> in $1/file name."
 rename -verbose 's/\<//g' $1/* |  tee -a $LOG_FILE
 #
 # 26. Remove <asterisk> in file name.
-f_banner "08 of 33 Remove <asterisk> in file name"
+f_banner "08 of 33 Remove <asterisk> in $1/file name."
 rename -verbose 's/\*//g' $1/* |  tee -a $LOG_FILE
 #
 # 27. Remove <dollar sign> in file name.
-f_banner "07 of 33 Remove <dollar sign> in file name"
+f_banner "07 of 33 Remove <dollar sign> in $1/file name."
 rename -verbose 's/\$//g' $1/* |  tee -a $LOG_FILE
 #
 # 28. Remove <at sign> in file name.
-f_banner "06 of 33 Remove <at sign> in file name"
+f_banner "06 of 33 Remove <at sign> in $1/file name."
 rename -verbose 's/\@//g' $1/* |  tee -a $LOG_FILE
 #
 # 29. Remove <pound sign> in file name.
-f_banner "05 of 33 Remove <pound sign> in file name"
+f_banner "05 of 33 Remove <pound sign> in $1/file name."
 rename -verbose 's/\#//g' $1/* |  tee -a $LOG_FILE
 #
 # 30. Remove <plus sign> in file name.
-f_banner "04 of 33 Remove <plus sign> in file name"
+f_banner "04 of 33 Remove <plus sign> in $1/file name."
 rename -verbose 's/\+//g' $1/* |  tee -a $LOG_FILE
 #
 # 31. Remove <equal sign> in file name.
-f_banner "03 of 33 Remove <equal sign> in file name"
+f_banner "03 of 33 Remove <equal sign> in $1/file name."
 rename -verbose 's/\=//g' $1/* |  tee -a $LOG_FILE
 #
 # 32. Remove <pipe sign> in file name.
-f_banner "02 of 33 Remove <pipe sign> in file name"
+f_banner "02 of 33 Remove <pipe sign> in $1/file name."
 rename -verbose 's/\!//g' $1/* |  tee -a $LOG_FILE
 #
 # 33. Remove <back-tick sign> in file name.
-f_banner "01 of 31 Remove <back-tick sign> in file name"
+f_banner "01 of 31 Remove <back-tick sign> in $1/file name."
 rename -verbose 's/\`//g' $1/* |  tee -a $LOG_FILE
 #
 echo -n "Finish time: " | tee -a $LOG_FILE
 date  | tee -a $LOG_FILE
+unset LOG_FILE
+#
+# All Dun Dun noodles.
