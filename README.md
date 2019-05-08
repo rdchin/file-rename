@@ -4,6 +4,7 @@ Script file_recursive_rename.sh recursively renames files in the sub-directories
 under the specified directory. It does not rename directories.
 
    Usage: bash file_recursive_rename.sh [ TARGET DIRECTORY ]
+   
           bash file_recursive_rename.sh /home/user/Documents
           (renames files in /home/user/Documents, /home/user/Documents/<sub-directories>)
 
@@ -11,7 +12,9 @@ under the specified directory. It does not rename directories.
 Script file_rename.sh is for renaming files under the specified directory.
 
    Usage: bash file_rename.sh [ TARGET DIRECTORY ]
+   
           bash file_rename.sh /home/user/Documents
+          (renames files only in directory /home/user/Documents)
 
  Summary:
 
