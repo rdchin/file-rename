@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-VERSION="2019-05-08 17:17"
+VERSION="2019-05-08 17:48"
 THIS_FILE="file_recursive_rename.sh"
 #
 #   Usage: bash file_recursive_rename.sh <TARGET DIRECTORY>
@@ -98,9 +98,16 @@ fi
 #
 echo -n "Script $THIS_FILE Start time: " | tee $LOG_FILE
 date | tee -a $LOG_FILE
-echo | tee -a $LOG_FILE
 #
 find $1 -type d >$TEMP_FILE
+#
+echo >> $LOG_FILE
+echo "List of Directories for file renaming." >> $LOG_FILE
+echo "--------------------------------------" >> $LOG_FILE
+cat $TEMP_FILE >>$LOG_FILE
+echo "--------------------------------------" >> $LOG_FILE
+echo "End of List of Directories">> $LOG_FILE
+echo >> $LOG_FILE
 #
 while read XSTR
 do

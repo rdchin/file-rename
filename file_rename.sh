@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-VERSION="2019-05-08 17:17"
+VERSION="2019-05-08 17:48"
 #
 #   Usage: bash file_rename.sh <TARGET DIRECTORY>
 #          bash file_rename.sh /home/user/Documents
