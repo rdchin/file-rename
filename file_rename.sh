@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-VERSION="2019-05-08 17:48"
+VERSION="2019-05-11 00:06"
 #
 #   Usage: bash file_rename.sh <TARGET DIRECTORY>
 #          bash file_rename.sh /home/user/Documents
@@ -251,11 +251,11 @@ f_banner "17 of 33 Repeat Replace <double-underscore> with <underscore> in $1/fi
 rename -verbose 's/__/_/g' $1/* |  tee -a $LOG_FILE
 #
 # 18. Replace <two-dashes><underscore> with <two-dashes> in file name.
-f_banner "16 of 33 Replace <two-dashes><underscore> with <two-dashes> in file name."
+f_banner "16 of 33 Replace <two-dashes><underscore> with <two-dashes> in $1/file name."
 rename -verbose 's/--_/--/g' $1/* |  tee -a $LOG_FILE
 #
 # 19. Replace <underscore><two-dashes> with <two-dashes> in file name.
-f_banner "15 of 33 Replace <underscore><two-dashes> with <two-dashes> in file name."
+f_banner "15 of 33 Replace <underscore><two-dashes> with <two-dashes> in $1/file name."
 rename -verbose 's/_--/--/g' $1/* |  tee -a $LOG_FILE
 #
 # 20. Remove <right-bracket> in file name.
