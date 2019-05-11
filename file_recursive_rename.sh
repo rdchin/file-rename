@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-VERSION="2019-05-08 17:48"
+VERSION="2019-05-10 23:34"
 THIS_FILE="file_recursive_rename.sh"
 #
 #   Usage: bash file_recursive_rename.sh <TARGET DIRECTORY>
@@ -33,6 +33,10 @@ THIS_FILE="file_recursive_rename.sh"
 #
 #@ CODE HISTORY
 #@
+#@ 2019-05-10 *Main Program included time-stamp in log file names.
+#@            *Main Program added deletion of temporary files and unneeded
+#2             log files.
+#@
 #@ 2019-05-08 *Initial release.
 #@ 
 #
@@ -41,7 +45,7 @@ THIS_FILE="file_recursive_rename.sh"
 # +----------------------------------------+
 #
 #  Inputs: LOG_FILE.
-#    Uses: None.
+#    Uses: RUNAPP, TEMP_FILE, FILEVR, X.
 # Outputs: None.
 #
 f_abort() {
@@ -67,8 +71,9 @@ f_abort() {
 # Outputs: None.
 #
 #
-LOG_FILE="file_recursive_rename.log"
-TEMP_FILE="file_recursive_rename.tmp"
+TSTAMP=$(date --date=now +"%Y-%m-%d_%H%M")
+LOG_FILE="file_recursive_rename_$TSTAMP.log"
+TEMP_FILE="file_recursive_rename_$TSTAMP.tmp"
 REQUIRED_FILE="file_rename.sh"
 #
 if [ -z $1 ] ; then
@@ -99,6 +104,7 @@ fi
 echo -n "Script $THIS_FILE Start time: " | tee $LOG_FILE
 date | tee -a $LOG_FILE
 #
+# Find all sub-directories under specified directory.
 find $1 -type d >$TEMP_FILE
 #
 echo >> $LOG_FILE
@@ -121,19 +127,56 @@ do
       echo
 done < $TEMP_FILE
 #
+# Find the name of any files that were renamed and append that excerpt to LOG_FILE.
+grep renamed file_rename*.log >> $LOG_FILE
+#
+# List log files for each sub-directory in a temporary file.
+ls -l file_rename*.log >$TEMP_FILE
+#
+# Display list of log files for each sub-directory.
+# Detect installed file viewer.
+RUNAPP=0
+for FILEVR in most more less
+    do
+    if [ $RUNAPP -eq 0 ] ; then
+       type $FILEVR >/dev/null 2>&1  # Test if $FILEVR application is installed.
+       ERROR=$?
+       if [ $ERROR -eq 0 ] ; then
+          $FILEVR $TEMP_FILE
+          RUNAPP=1
+       fi
+    fi
+    done
+unset RUNAPP FILEVR
+# Record finish time in log file.
+echo | tee -a $LOG_FILE
+echo -n "Script $THIS_FILE Finish time: " | tee -a $LOG_FILE
+date | tee -a $LOG_FILE
+#
+# Ask user to delete old log files.
+echo
+echo "The detailed log files are not necessary, a comprehensive list"
+echo "of renaming actions are recorded in log \"$LOG_FILE\"."
+echo
+echo -n "Delete detailed log files of actions in each directory (Y/n)? " ; read X
+case $X in
+     [Nn] | [Nn][Oo])
+     echo
+     echo "Detailed log files were not deleted."
+     echo
+     ;;
+     *)
+     # Delete log files.
+     rm file_rename*.log
+     echo
+     echo "Detailed log files were deleted."
+     echo
+     ;;
+esac
+#
 # Remove Temporary file.
 if [ -e $TEMP_FILE ] ; then
    rm $TEMP_FILE
 fi
-#
-# Find the name of any files that were renamed and append that excerpt to LOG_FILE.
-grep renamed file_rename*.log >> $LOG_FILE
-#
-# Delete log files. 
-rm file_rename*.log
-#
-echo | tee -a $LOG_FILE
-echo -n "Script $THIS_FILE Finish time: " | tee -a $LOG_FILE
-date | tee -a $LOG_FILE
 #
 # All Dun Dun noodles.
