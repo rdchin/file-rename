@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-VERSION="2019-05-11 00:06"
+VERSION="2019-12-26 11:17"
 #
 #   Usage: bash file_rename.sh <TARGET DIRECTORY>
 #          bash file_rename.sh /home/user/Documents
@@ -28,6 +28,9 @@ VERSION="2019-05-11 00:06"
 # 
 #
 #@ CODE HISTORY
+#@
+#@ 2019-12-26 *Main Program, f_check_command_rename added check for 
+#@             availability of "rename" command, if not then install it. 
 #@
 #@ 2019-05-08 *Main Program added directory name to the log file.
 #@            *Main Program changed name of the log file
@@ -123,6 +126,31 @@ f_press_enter_key_to_continue () { # Display message and wait for user input.
 } # End of function f_press_enter_key_to_continue
 #
 # +----------------------------------------+
+# |      Function f_check_command_rename   |
+# +----------------------------------------+
+#
+#  Inputs: $1=String, LOG_FILE.
+#    Uses: None.
+# Outputs: None.
+#
+f_check_command_rename () {
+      # Is command "rename" installed and available?
+      # Use "command -v" to determine if "rename" is installed and available?
+      command -v rename >/dev/null
+      # "&>/dev/null" does not work in Debian distro.
+      # 1=standard messages, 2=error messages, &=both.
+      ERROR=$?
+      #
+      # Is the "rename" command installed and available?
+      if [ $ERROR -eq 0 ] ; then
+         rename 's/$/.txt/' $FSDN_FILE"_"*  # Add *.txt file extension.
+      else
+         # No, the "rename" command is not installed, so install command "rename".
+         sudo apt install rename
+      fi
+} # End of function f_check_command_rename
+# 
+# +----------------------------------------+
 # |            Function f_abort            |
 # +----------------------------------------+
 #
@@ -152,6 +180,9 @@ f_abort() {
 #    Uses: None.
 # Outputs: None.
 #
+#
+# Is the command "rename" available?
+f_check_command_rename
 #
 LOG_FILE="file_rename_$(date +%Y%m%d-%H%M.%S%N).log"
 #
