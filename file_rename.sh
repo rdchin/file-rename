@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-VERSION="2019-12-26 11:17"
+VERSION="2019-12-26 18:49"
 #
 #   Usage: bash file_rename.sh <TARGET DIRECTORY>
 #          bash file_rename.sh /home/user/Documents
@@ -129,8 +129,8 @@ f_press_enter_key_to_continue () { # Display message and wait for user input.
 # |      Function f_check_command_rename   |
 # +----------------------------------------+
 #
-#  Inputs: $1=String, LOG_FILE.
-#    Uses: None.
+#  Inputs: None.
+#    Uses: ERROR.
 # Outputs: None.
 #
 f_check_command_rename () {
@@ -142,12 +142,11 @@ f_check_command_rename () {
       ERROR=$?
       #
       # Is the "rename" command installed and available?
-      if [ $ERROR -eq 0 ] ; then
-         rename 's/$/.txt/' $FSDN_FILE"_"*  # Add *.txt file extension.
-      else
+      if [ $ERROR -ne 0 ] ; then
          # No, the "rename" command is not installed, so install command "rename".
-         sudo apt install rename
+         sudo apt-get install rename
       fi
+      unset ERROR
 } # End of function f_check_command_rename
 # 
 # +----------------------------------------+
