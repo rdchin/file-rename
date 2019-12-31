@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-VERSION="2019-05-10 23:34"
+VERSION="2019-12-31 17:01"
 THIS_FILE="file_recursive_rename.sh"
 #
 #   Usage: bash file_recursive_rename.sh <TARGET DIRECTORY>
@@ -10,6 +10,8 @@ THIS_FILE="file_recursive_rename.sh"
 #
 # This script will recursively rename files in the specified directory
 # and any sub-directories to enforce standard file naming conventions.
+#
+# Files in hidden directories are excluded and are not renamed.
 #
 # If you save articles from web pages as PDF files and use the title 
 # of the article as the PDF file name, you will probably end up with
@@ -33,8 +35,12 @@ THIS_FILE="file_recursive_rename.sh"
 #
 #@ CODE HISTORY
 #@
+#@ 2019-12-31 *Main Program excluded hidden directories from file
+#@             renaming process.
+#@
 #@ 2019-05-10 *Main Program included time-stamp in log file names.
-#@            *Main Program added deletion of temporary files and unneeded
+#@            *Main Program added deletion of temporary files and 
+#@             unneeded
 #2             log files.
 #@
 #@ 2019-05-08 *Initial release.
@@ -106,6 +112,13 @@ date | tee -a $LOG_FILE
 #
 # Find all sub-directories under specified directory.
 find $1 -type d >$TEMP_FILE
+#
+# Do not rename files in hidden directories.
+# Filter out any hidden directory names from the list of directories
+# to be processed.
+TEMP_FILE2="file_recursive_rename2_$TSTAMP.tmp"
+grep --invert-match -F "/." $TEMP_FILE > $TEMP_FILE2
+mv $TEMP_FILE2 $TEMP_FILE
 #
 echo >> $LOG_FILE
 echo "List of Directories for file renaming." >> $LOG_FILE
