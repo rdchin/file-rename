@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-VERSION="2019-12-26 18:49"
+VERSION="2020-04-02 00:02"
 #
 #   Usage: bash file_rename.sh <TARGET DIRECTORY>
 #          bash file_rename.sh /home/user/Documents
@@ -28,6 +28,8 @@ VERSION="2019-12-26 18:49"
 # 
 #
 #@ CODE HISTORY
+#@
+#@ 2020-04-02 *Main Program, minor enhancements.
 #@
 #@ 2019-12-26 *Main Program, f_check_command_rename added check for 
 #@             availability of "rename" command, if not then install it. 
@@ -159,13 +161,13 @@ f_check_command_rename () {
 #
 f_abort() {
       echo $(tput setaf 1) # Set font to color red.
-      echo >&2 "***************" |  tee -a $LOG_FILE*
-      echo >&2 "*** ABORTED ***" |  tee -a $LOG_FILE*
-      echo >&2 "***************" |  tee -a $LOG_FILE*
+      echo  "***************" |  tee -a $LOG_FILE*
+      echo  "*** ABORTED ***" |  tee -a $LOG_FILE*
+      echo  "***************" |  tee -a $LOG_FILE*
       echo |  tee -a $LOG_FILE*
-      echo "An error occurred. Exiting..." >&2 |  tee -a $LOG_FILE*
-      exit 1
+      echo "An error occurred. Exiting..." |  tee -a $LOG_FILE*
       echo -n $(tput sgr0) # Set font to normal color.
+      exit 1
 } # End of function f_abort
 #
 # +----------------------------------------+
@@ -179,11 +181,20 @@ f_abort() {
 #    Uses: None.
 # Outputs: None.
 #
+LOG_FILE="file_rename_$(date +%Y-%m-%d-%H%M.%S%N).log"
+#
+clear  # Blank the screen.
+#
+# Does the Target Directory exist?
+if [ ! -d $1 ] ; then
+      echo $(tput setaf 1) # Set font to color red.
+      echo "Target Directory: $1" |  tee -a $LOG_FILE*
+      echo "  Does not exist." |  tee -a $LOG_FILE*
+   f_abort
+fi
 #
 # Is the command "rename" available?
 f_check_command_rename
-#
-LOG_FILE="file_rename_$(date +%Y%m%d-%H%M.%S%N).log"
 #
 # Create date stamp header for log file.
 echo -n "Start time for renaming files in directory $1: " | tee $LOG_FILE

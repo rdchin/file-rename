@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-VERSION="2019-12-31 17:01"
+VERSION="2020-04-02 00:02"
 THIS_FILE="file_recursive_rename.sh"
 #
 #   Usage: bash file_recursive_rename.sh <TARGET DIRECTORY>
@@ -35,6 +35,8 @@ THIS_FILE="file_recursive_rename.sh"
 #
 #@ CODE HISTORY
 #@
+#@ 2020-04-02 *Main Program, minor enhancements.
+#@
 #@ 2019-12-31 *Main Program excluded hidden directories from file
 #@             renaming process.
 #@
@@ -56,13 +58,13 @@ THIS_FILE="file_recursive_rename.sh"
 #
 f_abort() {
       echo $(tput setaf 1) # Set font to color red.
-      echo >&2 "***************" |  tee -a $LOG_FILE*
-      echo >&2 "*** ABORTED ***" |  tee -a $LOG_FILE*
-      echo >&2 "***************" |  tee -a $LOG_FILE*
+      echo "***************" |  tee -a $LOG_FILE
+      echo "*** ABORTED ***" |  tee -a $LOG_FILE
+      echo "***************" |  tee -a $LOG_FILE
       echo |  tee -a $LOG_FILE*
-      echo "An error occurred. Exiting..." >&2 |  tee -a $LOG_FILE*
-      exit 1
+      echo "An error occurred. Exiting..." |  tee -a $LOG_FILE
       echo -n $(tput sgr0) # Set font to normal color.
+      exit 1
 } # End of function f_abort
 #
 # +----------------------------------------+
@@ -82,33 +84,36 @@ LOG_FILE="file_recursive_rename_$TSTAMP.log"
 TEMP_FILE="file_recursive_rename_$TSTAMP.tmp"
 REQUIRED_FILE="file_rename.sh"
 #
+# Put the date stamp in the header of the log file.
+echo
+echo -n "Script $THIS_FILE" | tee $LOG_FILE
+echo -n "Start time: " | tee $LOG_FILE
+date | tee -a $LOG_FILE
+#
+#
 if [ -z $1 ] ; then
-   echo
-   echo "!!!WARNING!!! No target directory was specified."
-   echo "Usage: bash file_rename.sh <Target Directory name>"
-   echo
    echo -n $(tput setaf 1) # Set font to color red.
+   echo  | tee -a $LOG_FILE
+   echo  "!!!WARNING!!! No target directory was specified." | tee -a $LOG_FILE
+   echo  "Usage: bash file_recursive_rename.sh <Target Directory name>" | tee -a $LOG_FILE
    f_abort
 fi
 #
 if [ ! -d $1 ] ; then
-   echo
    echo -n $(tput setaf 1) # Set font to color red.
-   echo "!!!WARNING!!! Cannot continue, \"$1\" directory either does not exist"
-   echo "or you do not have WRITE permission to the directory: \"$1\"."
+   echo | tee -a $LOG_FILE
+   echo  "!!!WARNING!!! Cannot continue, \"$1\" directory either does not exist" | tee -a $LOG_FILE
+   echo  "or you do not have WRITE permission to the directory: \"$1\"." | tee -a $LOG_FILE
    f_abort
 fi
 #
 if [ ! -r $REQUIRED_FILE ] ; then
-   echo
    echo -n $(tput setaf 1) # Set font to color red.
-   echo "!!!WARNING!!! Cannot continue, script \"$REQUIRED_FILE\" either does not exist"
-   echo "or you do not have READ permission to the script: \"$REQUIRED_FILE\"."
+   echo | tee -a $LOG_FILE
+   echo "!!!WARNING!!! Cannot continue, script \"$REQUIRED_FILE\" either does not exist" | tee -a $LOG_FILE
+   echo "or you do not have READ permission to the script: \"$REQUIRED_FILE\"."   echo | tee -a $LOG_FILE
    f_abort
 fi
-#
-echo -n "Script $THIS_FILE Start time: " | tee $LOG_FILE
-date | tee -a $LOG_FILE
 #
 # Find all sub-directories under specified directory.
 find $1 -type d >$TEMP_FILE
@@ -193,3 +198,5 @@ if [ -e $TEMP_FILE ] ; then
 fi
 #
 # All Dun Dun noodles.
+
+
