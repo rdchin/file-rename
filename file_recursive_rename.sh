@@ -1,52 +1,172 @@
 #!/bin/bash
 #
-VERSION="2020-04-02 00:02"
+# ©2020 Copyright 2020 Robert D. Chin
+#
+# Usage: bash file_recursive_rename.sh <TARGET DIRECTORY>
+#        (not sh file_recursive_rename.sh)
+#
+# +----------------------------------------+
+# |        Default Variable Values         |
+# +----------------------------------------+
+#
+VERSION="2020-04-28 23:35"
 THIS_FILE="file_recursive_rename.sh"
 #
-#   Usage: bash file_recursive_rename.sh <TARGET DIRECTORY>
-#          bash file_recursive_rename.sh /home/user/Documents
+# +----------------------------------------+
+# |            Brief Description           |
+# +----------------------------------------+
 #
-# Summary:
-#
-# This script will recursively rename files in the specified directory
-# and any sub-directories to enforce standard file naming conventions.
-#
-# Files in hidden directories are excluded and are not renamed.
-#
-# If you save articles from web pages as PDF files and use the title 
-# of the article as the PDF file name, you will probably end up with
-# various punctuation marks in your file name which are incompatible
-# or undesirable for any given Operating System (i.e. Unix, Linux,
-# Microsoft, Apple, Android).
-#
-# Such file names derived from article titles often will contain
-# punctuation marks such as "?", "!", "/", "&", "%".
-#
-# This script was written to enforce some of the file naming conventions
-# to ensure inter-Operating System compatibility.
-#
-# It does not enforce all common file naming conventions, but only some
-# of the more common ones. See comments below for comprehensive list.
-#
-# You may easily add more naming conventions in the "Start Main Program"
-# section of the script using the existing code as a template.
-# 
-# 
-#
-#@ CODE HISTORY
-#@
-#@ 2020-04-02 *Main Program, minor enhancements.
-#@
-#@ 2019-12-31 *Main Program excluded hidden directories from file
-#@             renaming process.
-#@
-#@ 2019-05-10 *Main Program included time-stamp in log file names.
-#@            *Main Program added deletion of temporary files and 
-#@             unneeded
-#2             log files.
-#@
-#@ 2019-05-08 *Initial release.
+#@ Brief Description
 #@ 
+#@ 
+#@ This script will recursively rename files in the specified directory
+#@ and any sub-directories to enforce standard file naming conventions.
+#@ 
+#@ Files in hidden directories are excluded and are not renamed.
+#@ 
+#@ If you save articles from web pages as PDF files and use the title 
+#@ of the article as the PDF file name, you will probably end up with
+#@ various punctuation marks in your file name which are incompatible
+#@ or undesirable for any given Operating System (i.e. Unix, Linux,
+#@ Microsoft, Apple, Android).
+#@ 
+#@ Such file names derived from article titles often will contain
+#@ punctuation marks such as "?", "!", "/", "&", "%".
+#@ 
+#@ This script was written to enforce some of the file naming conventions
+#@ to ensure inter-Operating System compatibility.
+#@ 
+#@ It does not enforce all common file naming conventions, but only some
+#@ of the more common ones. See comments below for comprehensive list.
+#@ 
+#@ You may easily add more naming conventions in the "Start Main Program"
+#@ section of the script using the existing code as a template.
+#@ 
+#@   Usage: bash file_recursive_rename.sh <TARGET DIRECTORY>
+#@          bash file_recursive_rename.sh /home/user/Documents
+#
+# +----------------------------------------+
+# |             Help and Usage             |
+# +----------------------------------------+
+#
+#?    Usage: bash file_recursive_rename.sh [Target_Directory]
+#?           bash file_recursive_rename.sh [OPTION]
+#? Examples:
+#?
+#?bash file_recursive_rename.sh [Target_Directory] 
+#?                                         # Rename files in directory.
+#?
+#?bash file_recursive_rename.sh --help     # Displays this help message.
+#?                              -?
+#?
+#?bash file_recursive_rename.sh --about    # Displays script version.
+#?                              --version
+#?                              --ver
+#?                              -v
+#?
+#?bash file_recursive_rename.sh --history  # Displays script code history.
+#?                              --hist
+#
+# +----------------------------------------+
+# |           Code Change History          |
+# +----------------------------------------+
+#
+## Code Change History
+##
+## (After each edit made, please update Code History and VERSION.)
+##
+## CODE HISTORY
+##
+## 2020-04-28 *Main Program updated to latest standards.
+##
+## 2020-04-02 *Main Program minor enhancements.
+##
+## 2019-12-31 *Main Program excluded hidden directories from file
+##             renaming process.
+##
+## 2019-05-10 *Main Program included time-stamp in log file names.
+##            *Main Program added deletion of temporary files and 
+##             unneeded log files.
+##
+## 2019-05-08 *Initial release.
+#
+# +----------------------------------------+
+# |         Function f_script_path         |
+# +----------------------------------------+
+#
+#     Rev: 2020-04-20
+#  Inputs: $BASH_SOURCE (System variable).
+#    Uses: None.
+# Outputs: SCRIPT_PATH, THIS_DIR.
+#
+f_script_path () {
+      #
+      # BASH_SOURCE[0] gives the filename of the script.
+      # dirname "{$BASH_SOURCE[0]}" gives the directory of the script
+      # Execute commands: cd <script directory> and then pwd
+      # to get the directory of the script.
+      # NOTE: This code does not work with symlinks in directory path.
+      #
+      # !!!Non-BASH environments will give error message about line below!!!
+      SCRIPT_PATH=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+      THIS_DIR=$SCRIPT_PATH  # Set $THIS_DIR to location of this script.
+      #
+} # End of function f_script_path.
+#
+# +----------------------------------------+
+# |         Function f_arguments           |
+# +----------------------------------------+
+#
+#     Rev: 2020-04-28 (Customized)
+#  Inputs: $1=Argument
+#             [--help] [ -h ] [ -? ]
+#             [--about]
+#             [--version] [ -ver ] [ -v ] [--about ]
+#             [--history] [--hist ]
+#             [] [ text ] [ dialog ] [ whiptail ]
+#    Uses: None.
+# Outputs: GUI, ERROR.
+#
+f_arguments () {
+      #
+      # If there is more than one argument, display help USAGE message, because only one argument is allowed.
+      if [ $# -ge 2 ] ; then
+         f_help_message text
+         exit 0  # This cleanly closes the process generated by #!bin/bash. 
+                 # Otherwise every time this script is run, another instance of
+                 # process /bin/bash is created using up resources.
+      fi
+      #
+      case $1 in
+           --help | "-?")
+              # If the one argument is "--help" display help USAGE message.
+              f_help_message text
+              exit 0  # This cleanly closes the process generated by #!bin/bash. 
+                      # Otherwise every time this script is run, another instance of
+                      # process /bin/bash is created using up resources.
+           ;;
+           --about | --version | --ver | -v)
+              f_about text
+              exit 0  # This cleanly closes the process generated by #!bin/bash. 
+                      # Otherwise every time this script is run, another instance of
+                      # process /bin/bash is created using up resources.
+           ;;
+           --history | --hist)
+              f_code_history text
+              exit 0  # This cleanly closes the process generated by #!bin/bash. 
+                      # Otherwise every time this script is run, another instance of
+                      # process /bin/bash is created using up resources.
+           ;;
+           -*)
+              # If the one argument is "-<unrecognized>" display help USAGE message.
+              f_help_message text
+              exit 0  # This cleanly closes the process generated by #!bin/bash. 
+                      # Otherwise every time this script is run, another instance of
+                      # process /bin/bash is created using up resources.
+           ;;
+      esac
+      #
+}  # End of function f_arguments.
 #
 # +----------------------------------------+
 # |            Function f_abort            |
@@ -67,6 +187,136 @@ f_abort() {
       exit 1
 } # End of function f_abort
 #
+# +------------------------------------+
+# |          Function f_about          |
+# +------------------------------------+
+#
+#     Rev: 2020-04-28
+#  Inputs: $1=GUI - "text", "dialog" or "whiptail" the preferred user-interface.
+#          THIS_DIR, THIS_FILE, VERSION.
+#    Uses: X.
+# Outputs: None.
+#
+f_about () {
+      #
+      # Specify $THIS_FILE name of any file containing the text to be displayed.
+      THIS_FILE="file_recursive_rename.sh"
+      TEMP_FILE=$THIS_DIR/$THIS_FILE"_temp.txt"
+      #
+      # Set $VERSION according as it is set in the beginning of $THIS_FILE.
+      X=$(grep --max-count=1 "VERSION" $THIS_FILE)
+      # X="VERSION=YYYY-MM-DD HH:MM"
+      # Use command "eval" to set $VERSION.
+      eval $X
+      #
+      echo "Script: $THIS_FILE. Version: $VERSION" >$TEMP_FILE
+      echo >>$TEMP_FILE
+      #
+      # Display text (all lines beginning with "#@" but do not print "#@").
+      # sed substitutes null for "#@" at the beginning of each line
+      # so it is not printed.
+      sed -n 's/^#@//'p $THIS_DIR/$THIS_FILE >> $TEMP_FILE
+      #
+      f_msg_txt_file_ok $1 "OK" "About (use arrow keys to scroll up/down/side-ways)" $TEMP_FILE
+      #
+} # End of f_about.
+#
+# +------------------------------------+
+# |      Function f_code_history       |
+# +------------------------------------+
+#
+#     Rev: 2020-04-20
+#  Inputs: $1=GUI - "text", "dialog" or "whiptail" the preferred user-interface.
+#          THIS_DIR, THIS_FILE, VERSION.
+#    Uses: X.
+# Outputs: None.
+#
+f_code_history () {
+      #
+      # Specify $THIS_FILE name of any file containing the text to be displayed.
+      THIS_FILE="file_recursive_rename.sh"
+      TEMP_FILE=$THIS_DIR/$THIS_FILE"_temp.txt"
+      #
+      # Set $VERSION according as it is set in the beginning of $THIS_FILE.
+      X=$(grep --max-count=1 "VERSION" $THIS_FILE)
+      # X="VERSION=YYYY-MM-DD HH:MM"
+      # Use command "eval" to set $VERSION.
+      eval $X
+      #
+      echo "Script: $THIS_FILE. Version: $VERSION" >$TEMP_FILE
+      echo >>$TEMP_FILE
+      #
+      # Display text (all lines beginning with "#@" but do not print "#@").
+      # sed substitutes null for "#@" at the beginning of each line
+      # so it is not printed.
+      sed -n 's/^##//'p $THIS_DIR/$THIS_FILE >>$TEMP_FILE
+      #
+      f_msg_txt_file_ok text "OK" "Code History (use arrow keys to scroll up/down/side-ways)" $TEMP_FILE
+      #
+} # End of function f_code_history.
+#
+# +------------------------------------+
+# |      Function f_help_message       |
+# +------------------------------------+
+#
+#     Rev: 2020-04-20
+#  Inputs: $1=GUI - "text", "dialog" or "whiptail" the preferred user-interface.
+#          THIS_DIR, THIS_FILE, VERSION.
+#    Uses: X.
+# Outputs: None.
+#
+f_help_message () {
+      #
+      # Specify $THIS_FILE name of any file containing the text to be displayed.
+      THIS_FILE="file_recursive_rename.sh"
+      TEMP_FILE=$THIS_DIR/$THIS_FILE"_temp.txt"
+      #
+      # Set $VERSION according as it is set in the beginning of $THIS_FILE.
+      X=$(grep --max-count=1 "VERSION" $THIS_FILE)
+      # X="VERSION=YYYY-MM-DD HH:MM"
+      # Use command "eval" to set $VERSION.
+      eval $X
+      #
+      echo "Script: $THIS_FILE. Version: $VERSION" >$TEMP_FILE
+      echo >>$TEMP_FILE
+      #
+      # Display text (all lines beginning with "#?" but do not print "#?").
+      # sed substitutes null for "#?" at the beginning of each line
+      # so it is not printed.
+      sed -n 's/^#?//'p $THIS_DIR/$THIS_FILE >> $TEMP_FILE
+      #
+      f_msg_txt_file_ok text "OK" "Usage (use arrow keys to scroll up/down/side-ways)" $TEMP_FILE
+      #
+} # End of f_help_message.
+#
+# +------------------------------+
+# |  Function f_msg_txt_file_ok  |
+# +------------------------------+
+#
+#     Rev: 2020-04-22
+#  Inputs: $1 - "text", "dialog" or "whiptail" The CLI GUI application in use.
+#          $2 - "OK"  [OK] button at end of text.
+#               "NOK" No [OK] button or "Press Enter key to continue"
+#               at end of text but pause n seconds
+#               to allow reader to read text by using sleep n command.
+#          $3 - Title.
+#          $4 - Text string or text file. 
+#    Uses: None.
+# Outputs: ERROR. 
+#
+f_msg_txt_file_ok () {
+      #
+      # If $2 is "OK" then use command "less".
+      #
+      clear  # Blank the screen.
+      #
+      # Display text file contents.
+      less -P '%P\% (Spacebar, PgUp/PgDn, Up/Dn arrows, press q to quit)' $4
+      #
+      clear  # Blank the screen.
+      #
+} # End of function f_msg_txt_file_ok
+#
 # +----------------------------------------+
 # |            Start Main Program          |
 # +----------------------------------------+
@@ -78,6 +328,13 @@ f_abort() {
 #    Uses: XSTR.
 # Outputs: None.
 #
+clear  # Blank the screen.
+#
+# Set THIS_DIR, SCRIPT_PATH to directory path of script.
+f_script_path
+#
+# Test for Optional Arguments.
+f_arguments $1  # Also sets variable GUI.
 #
 TSTAMP=$(date --date=now +"%Y-%m-%d_%H%M")
 LOG_FILE="file_recursive_rename_$TSTAMP.log"
@@ -198,5 +455,3 @@ if [ -e $TEMP_FILE ] ; then
 fi
 #
 # All Dun Dun noodles.
-
-

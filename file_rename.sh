@@ -1,99 +1,232 @@
 #!/bin/bash
 #
-VERSION="2020-04-02 00:02"
+# ©2020 Copyright 2020 Robert D. Chin
 #
-#   Usage: bash file_rename.sh <TARGET DIRECTORY>
-#          bash file_rename.sh /home/user/Documents
+# Usage: bash file_rename.sh <TARGET DIRECTORY>
+#        (not sh file_rename.sh)
 #
-# Summary:
+# +----------------------------------------+
+# |        Default Variable Values         |
+# +----------------------------------------+
 #
-# If you save articles from web pages as PDF files and use the title 
-# of the article as the PDF file name, you will probably end up with
-# various punctuation marks in your file name which are incompatible
-# or undesirable for any given Operating System (i.e. Unix, Linux,
-# Microsoft, Apple, Android).
+VERSION="2020-04-28 23:35"
+THIS_FILE="file_rename.sh"
 #
-# Such file names derived from article titles often will contain
-# punctuation marks such as "?", "!", "/", "&", "%".
+# +----------------------------------------+
+# |            Brief Description           |
+# +----------------------------------------+
 #
-# This script was written to enforce some of the file naming conventions
-# to ensure inter-Operating System compatibility.
-#
-# It does not enforce all common file naming conventions, but only some
-# of the more common ones. See comments below for comprehensive list.
-#
-# You may easily add more naming conventions in the "Start Main Program"
-# section of the script using the existing code as a template.
-# 
-# 
-#
-#@ CODE HISTORY
-#@
-#@ 2020-04-02 *Main Program, minor enhancements.
-#@
-#@ 2019-12-26 *Main Program, f_check_command_rename added check for 
-#@             availability of "rename" command, if not then install it. 
-#@
-#@ 2019-05-08 *Main Program added directory name to the log file.
-#@            *Main Program changed name of the log file
-#@             From: file_rename_<YYYYMMDD-HHMM>
-#@               To: file_rename_<YYYYMMDD-HHMM.SSNNNNNNNNN>.
-#@            *Main Program unset LOG_FILE at end of script.
-#@
-#@ 2019-04-29 *Main Program deleted substitution of strings containing
-#@             forward-slash or back-slash to prevent file directory corruption.
-#@
-#@ 2019-04-08 *Main Program added more substitution strings.
-#@
-#@ 2018-06-28 *Main Program added the "-verbose" option to the "rename" command
-#@             "rename -verbose 's/search-string/replacement-string/g'
-#@                     $1/* |  tee -a $LOG_FILE".
-#@
-#@ 2018-06-07 *Rewrote script to use the rename command with a wild card
-#@             for the filename. It is much faster than using
-#@             "find -exec rename".
-#@             Change from:
-#@             find -H [directory] [-maxdepth 1] -type f
-#@                  -exec rename -v "s/$1/$2/g" {} \;  | tee -a $LOG_FILE
-#@             Change to:
-#@             rename 's/search-string/replacement-string/g' $1/*
-#@                    |  tee -a $LOG_FILE
-#@
-#@ 2017-03-10 *Main Program, added script title and version comment.
-#@
-#@ 2017-03-07 *Main Program, added comment to banner to indicate
-#@             step # of process.
-#@
-#@ 2016-12-27 *Main Program added date/time stamp to file name of log file.
-#@            *Main Program, f_find_and_delete, f_find_and_replace
-#@             added command options passed to find and rename commands.
-#@
-#@ 2016-12-07 *f_find_and_delete, f_find_and_replace use one find command.
-#@             Used the rename -v option to log verbosely.
-#@            *Main Program added find and replace items and added an
-#@             option to quit before any files are renamed.
-#@            *f_banner simplified format of displayed messages.
-#@
-#@ 2016-12-06 *f_find_and_delete, f_find_and_replace used two find commands,
-#@             the first one to log the action and the second to take action.
-#@
-#@ 2016-12-04 *Main Program, f_find_and_delete, f_find_and_replace deleted
-#@             test simulation feature and add recursive sub-folder renaming.
-#@
-#@ 2016-10-11 *Main Program comment corrected replacing <colon><space> with
-#@             <two-dashes>.
-#@            *Main Program Correct order of replacements.
-#@             First  "Replace <colon><space> with <two-dashes> in file name"
-#@             Second "Replace <colon> with <underscore> in file name."
-#@             Third  "Replace <space> with <underscore> in file name."
-#@            *f_abort, f_press_enter_key_to_continue added.
-#@            *Main Program added check if a target directory was specified and exists.
+#@ Brief Description
 #@ 
-#@ 2016-08-22 *Main Program added replace <colon><space> with <two-dashes>.
-#@             Deleted replace <colon> with <underscore>.
-#@
-#@ 2016-07-20 *Initial release.
+#@ If you save articles from web pages as PDF files and use the title 
+#@ of the article as the PDF file name, you will probably end up with
+#@ various punctuation marks in your file name which are incompatible
+#@ or undesirable for any given Operating System (i.e. Unix, Linux,
+#@ Microsoft, Apple, Android).
 #@ 
+#@ Such file names derived from article titles often will contain
+#@ punctuation marks such as "?", "!", "/", "&", "%".
+#@ 
+#@ This script was written to enforce some of the file naming conventions
+#@ to ensure inter-Operating System compatibility.
+#@ 
+#@ It does not enforce all common file naming conventions, but only some
+#@ of the more common ones. See comments below for comprehensive list.
+#@ 
+#@ You may easily add more naming conventions in the "Start Main Program"
+#@ section of the script using the existing code as a template.
+#@ 
+#@   Usage: bash file_rename.sh <TARGET DIRECTORY>
+#@          bash file_rename.sh /home/user/Documents
+#@ 
+#@ 
+#@              Compatible file names for most Operating Systems
+#@ 
+#@ Do not use the following characters:
+#@ # pound          < left angle bracket   $ dollar sign        + plus sign
+#@ % percent        > right angle bracket  ! exclamation point  ` backtick
+#@ & ampersand      * asterisk             ' single quotes      | pipe
+#@ { left bracket   ? question mark        " double quotes      = equal sign
+#@ } right bracket  blank spaces           : colon              @ at sign
+#
+# +----------------------------------------+
+# |             Help and Usage             |
+# +----------------------------------------+
+#
+#?    Usage: bash file_rename.sh
+#?           bash file_rename.sh [OPTION]
+#?           bash file_rename.sh [Target_Directory]
+#?
+#? Examples:
+#?
+#?bash file_rename.sh [Target_Directory] # Run script on target directory.
+#?
+#?bash file_rename.sh --help     # Displays this help message.
+#?                    -?
+#?
+#?bash file_rename.sh --about    # Displays script version.
+#?                    --version
+#?                    --ver
+#?                    -v
+#?
+#?bash file_rename.sh --history  # Displays script code history.
+#?                    --hist
+#
+# +----------------------------------------+
+# |           Code Change History          |
+# +----------------------------------------+
+#
+## Code Change History
+##
+## (After each edit made, please update Code History and VERSION.)
+##
+## CODE HISTORY
+##
+## 2020-04-28 *Main Program updated to latest standards.
+##
+## 2020-04-02 *Main Program minor enhancements.
+##
+## 2019-12-26 *Main Program f_check_command_rename added check for 
+##             availability of "rename" command, if not then install it. 
+##
+## 2019-05-08 *Main Program added directory name to the log file.
+##            *Main Program changed name of the log file
+##             From: file_rename_<YYYYMMDD-HHMM>
+##               To: file_rename_<YYYYMMDD-HHMM.SSNNNNNNNNN>.
+##            *Main Program unset LOG_FILE at end of script.
+##
+## 2019-04-29 *Main Program deleted substitution of strings containing
+##             forward-slash or back-slash to prevent file directory corruption.
+##
+## 2019-04-08 *Main Program added more substitution strings.
+##
+## 2018-06-28 *Main Program added the "-verbose" option to the "rename" command
+##             "rename -verbose 's/search-string/replacement-string/g'
+##                     $1/* |  tee -a $LOG_FILE".
+##
+## 2018-06-07 *Rewrote script to use the rename command with a wild card
+##             for the filename. It is much faster than using
+##             "find -exec rename".
+##             Change from:
+##             find -H [directory] [-maxdepth 1] -type f
+##                  -exec rename -v "s/$1/$2/g" {} \;  | tee -a $LOG_FILE
+##             Change to:
+##             rename 's/search-string/replacement-string/g' $1/*
+##                    |  tee -a $LOG_FILE
+##
+## 2017-03-10 *Main Program added script title and version comment.
+##
+## 2017-03-07 *Main Program added comment to banner to indicate
+##             step # of process.
+##
+## 2016-12-27 *Main Program added date/time stamp to file name of log file.
+##            *Main Program, f_find_and_delete, f_find_and_replace
+##             added command options passed to find and rename commands.
+##
+## 2016-12-07 *f_find_and_delete, f_find_and_replace use one find command.
+##             Used the rename -v option to log verbosely.
+##            *Main Program added find and replace items and added an
+##             option to quit before any files are renamed.
+##            *f_banner simplified format of displayed messages.
+##
+## 2016-12-06 *f_find_and_delete, f_find_and_replace used two find commands,
+##             the first one to log the action and the second to take action.
+##
+## 2016-12-04 *Main Program, f_find_and_delete, f_find_and_replace deleted
+##             test simulation feature and add recursive sub-folder renaming.
+##
+## 2016-10-11 *Main Program comment corrected replacing <colon><space> with
+##             <two-dashes>.
+##            *Main Program Correct order of replacements.
+##             First  "Replace <colon><space> with <two-dashes> in file name"
+##             Second "Replace <colon> with <underscore> in file name."
+##             Third  "Replace <space> with <underscore> in file name."
+##            *f_abort, f_press_enter_key_to_continue added.
+##            *Main Program added check if a target directory was specified and exists.
+## 
+## 2016-08-22 *Main Program added replace <colon><space> with <two-dashes>.
+##             Deleted replace <colon> with <underscore>.
+##
+## 2016-07-20 *Initial release.
+#
+# +----------------------------------------+
+# |         Function f_script_path         |
+# +----------------------------------------+
+#
+#     Rev: 2020-04-20
+#  Inputs: $BASH_SOURCE (System variable).
+#    Uses: None.
+# Outputs: SCRIPT_PATH, THIS_DIR.
+#
+f_script_path () {
+      #
+      # BASH_SOURCE[0] gives the filename of the script.
+      # dirname "{$BASH_SOURCE[0]}" gives the directory of the script
+      # Execute commands: cd <script directory> and then pwd
+      # to get the directory of the script.
+      # NOTE: This code does not work with symlinks in directory path.
+      #
+      # !!!Non-BASH environments will give error message about line below!!!
+      SCRIPT_PATH=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+      THIS_DIR=$SCRIPT_PATH  # Set $THIS_DIR to location of this script.
+      #
+} # End of function f_script_path.
+#
+# +----------------------------------------+
+# |         Function f_arguments           |
+# +----------------------------------------+
+#
+#     Rev: 2020-04-28 (Customized)
+#  Inputs: $1=Argument
+#             [--help] [ -h ] [ -? ]
+#             [--about]
+#             [--version] [ -ver ] [ -v ] [--about ]
+#             [--history] [--hist ]
+#             [] [ text ] [ dialog ] [ whiptail ]
+#    Uses: None.
+# Outputs: GUI, ERROR.
+#
+f_arguments () {
+      #
+      # If there is more than one argument, display help USAGE message, because only one argument is allowed.
+      if [ $# -ge 2 ] ; then
+         f_help_message text
+         exit 0  # This cleanly closes the process generated by #!bin/bash. 
+                 # Otherwise every time this script is run, another instance of
+                 # process /bin/bash is created using up resources.
+      fi
+      #
+      case $1 in
+           --help | "-?")
+              # If the one argument is "--help" display help USAGE message.
+              f_help_message text
+              exit 0  # This cleanly closes the process generated by #!bin/bash. 
+                      # Otherwise every time this script is run, another instance of
+                      # process /bin/bash is created using up resources.
+           ;;
+           --about | --version | --ver | -v)
+              f_about text
+              exit 0  # This cleanly closes the process generated by #!bin/bash. 
+                      # Otherwise every time this script is run, another instance of
+                      # process /bin/bash is created using up resources.
+           ;;
+           --history | --hist)
+              f_code_history text
+              exit 0  # This cleanly closes the process generated by #!bin/bash. 
+                      # Otherwise every time this script is run, another instance of
+                      # process /bin/bash is created using up resources.
+           ;;
+           -*)
+              # If the one argument is "-<unrecognized>" display help USAGE message.
+              f_help_message text
+              exit 0  # This cleanly closes the process generated by #!bin/bash. 
+                      # Otherwise every time this script is run, another instance of
+                      # process /bin/bash is created using up resources.
+           ;;
+      esac
+      #
+}  # End of function f_arguments.
+#
 # +----------------------------------------+
 # |            Function f_banner           |
 # +----------------------------------------+
@@ -170,6 +303,136 @@ f_abort() {
       exit 1
 } # End of function f_abort
 #
+# +------------------------------------+
+# |          Function f_about          |
+# +------------------------------------+
+#
+#     Rev: 2020-04-28
+#  Inputs: $1=GUI - "text", "dialog" or "whiptail" the preferred user-interface.
+#          THIS_DIR, THIS_FILE, VERSION.
+#    Uses: X.
+# Outputs: None.
+#
+f_about () {
+      #
+      # Specify $THIS_FILE name of any file containing the text to be displayed.
+      THIS_FILE="file_rename.sh"
+      TEMP_FILE=$THIS_DIR/$THIS_FILE"_temp.txt"
+      #
+      # Set $VERSION according as it is set in the beginning of $THIS_FILE.
+      X=$(grep --max-count=1 "VERSION" $THIS_FILE)
+      # X="VERSION=YYYY-MM-DD HH:MM"
+      # Use command "eval" to set $VERSION.
+      eval $X
+      #
+      echo "Script: $THIS_FILE. Version: $VERSION" >$TEMP_FILE
+      echo >>$TEMP_FILE
+      #
+      # Display text (all lines beginning with "#@" but do not print "#@").
+      # sed substitutes null for "#@" at the beginning of each line
+      # so it is not printed.
+      sed -n 's/^#@//'p $THIS_DIR/$THIS_FILE >> $TEMP_FILE
+      #
+      f_msg_txt_file_ok text "OK" "About (use arrow keys to scroll up/down/side-ways)" $TEMP_FILE
+      #
+} # End of f_about.
+#
+# +------------------------------------+
+# |      Function f_code_history       |
+# +------------------------------------+
+#
+#     Rev: 2020-04-20
+#  Inputs: $1=GUI - "text", "dialog" or "whiptail" the preferred user-interface.
+#          THIS_DIR, THIS_FILE, VERSION.
+#    Uses: X.
+# Outputs: None.
+#
+f_code_history () {
+      #
+      # Specify $THIS_FILE name of any file containing the text to be displayed.
+      THIS_FILE="file_rename.sh"
+      TEMP_FILE=$THIS_DIR/$THIS_FILE"_temp.txt"
+      #
+      # Set $VERSION according as it is set in the beginning of $THIS_FILE.
+      X=$(grep --max-count=1 "VERSION" $THIS_FILE)
+      # X="VERSION=YYYY-MM-DD HH:MM"
+      # Use command "eval" to set $VERSION.
+      eval $X
+      #
+      echo "Script: $THIS_FILE. Version: $VERSION" >$TEMP_FILE
+      echo >>$TEMP_FILE
+      #
+      # Display text (all lines beginning with "#@" but do not print "#@").
+      # sed substitutes null for "#@" at the beginning of each line
+      # so it is not printed.
+      sed -n 's/^##//'p $THIS_DIR/$THIS_FILE >>$TEMP_FILE
+      #
+      f_msg_txt_file_ok text "OK" "Code History (use arrow keys to scroll up/down/side-ways)" $TEMP_FILE
+      #
+} # End of function f_code_history.
+#
+# +------------------------------------+
+# |      Function f_help_message       |
+# +------------------------------------+
+#
+#     Rev: 2020-04-20
+#  Inputs: $1=GUI - "text", "dialog" or "whiptail" the preferred user-interface.
+#          THIS_DIR, THIS_FILE, VERSION.
+#    Uses: X.
+# Outputs: None.
+#
+f_help_message () {
+      #
+      # Specify $THIS_FILE name of any file containing the text to be displayed.
+      THIS_FILE="file_rename.sh"
+      TEMP_FILE=$THIS_DIR/$THIS_FILE"_temp.txt"
+      #
+      # Set $VERSION according as it is set in the beginning of $THIS_FILE.
+      X=$(grep --max-count=1 "VERSION" $THIS_FILE)
+      # X="VERSION=YYYY-MM-DD HH:MM"
+      # Use command "eval" to set $VERSION.
+      eval $X
+      #
+      echo "Script: $THIS_FILE. Version: $VERSION" >$TEMP_FILE
+      echo >>$TEMP_FILE
+      #
+      # Display text (all lines beginning with "#?" but do not print "#?").
+      # sed substitutes null for "#?" at the beginning of each line
+      # so it is not printed.
+      sed -n 's/^#?//'p $THIS_DIR/$THIS_FILE >> $TEMP_FILE
+      #
+      f_msg_txt_file_ok text "OK" "Usage (use arrow keys to scroll up/down/side-ways)" $TEMP_FILE
+      #
+} # End of f_help_message.
+#
+# +------------------------------+
+# |  Function f_msg_txt_file_ok  |
+# +------------------------------+
+#
+#     Rev: 2020-04-22
+#  Inputs: $1 - "text", "dialog" or "whiptail" The CLI GUI application in use.
+#          $2 - "OK"  [OK] button at end of text.
+#               "NOK" No [OK] button or "Press Enter key to continue"
+#               at end of text but pause n seconds
+#               to allow reader to read text by using sleep n command.
+#          $3 - Title.
+#          $4 - Text string or text file. 
+#    Uses: None.
+# Outputs: ERROR. 
+#
+f_msg_txt_file_ok () {
+      #
+      # If $2 is "OK" then use command "less".
+      #
+      clear  # Blank the screen.
+      #
+      # Display text file contents.
+      less -P '%P\% (Spacebar, PgUp/PgDn, Up/Dn arrows, press q to quit)' $4
+      #
+      clear  # Blank the screen.
+      #
+} # End of function f_msg_txt_file_ok
+#
 # +----------------------------------------+
 # |            Start Main Program          |
 # +----------------------------------------+
@@ -181,9 +444,15 @@ f_abort() {
 #    Uses: None.
 # Outputs: None.
 #
+clear  # Blank the screen.
+#
+# Set THIS_DIR, SCRIPT_PATH to directory path of script.
+f_script_path
+#
 LOG_FILE="file_rename_$(date +%Y-%m-%d-%H%M.%S%N).log"
 #
-clear  # Blank the screen.
+# Test for Optional Arguments.
+f_arguments $1  # Also sets variable GUI.
 #
 # Does the Target Directory exist?
 if [ ! -d $1 ] ; then
@@ -203,12 +472,11 @@ date  | tee -a $LOG_FILE
 # Compatible file names for most Operating Systems.
 #
 # Do not use the following characters:
-# # pound           < left angle bracket        $ dollar sign           + plus sign
-# % percent         > right angle bracket       ! exclamation point     ` backtick
-# & ampersand       * asterisk                  ' single quotes         | pipe
-# { left bracket    ? question mark             " double quotes         = equal sign
-# } right bracket   / forward slash             : colon
-# \ back slash      blank spaces                @ at sign
+# # pound          < left angle bracket   $ dollar sign        + plus sign
+# % percent        > right angle bracket  ! exclamation point  ` backtick
+# & ampersand      * asterisk             ' single quotes      | pipe
+# { left bracket   ? question mark        " double quotes      = equal sign
+# } right bracket  blank spaces           : colon              @ at sign
 #
 # File names must not begin or end with a <space>, <period>, <hyphen>, or <underline>
 # File names should be shorter than 31 characters for compatibility with older (1950-1990's) Operating Systems.
@@ -359,4 +627,8 @@ echo -n "Finish time: " | tee -a $LOG_FILE
 date  | tee -a $LOG_FILE
 unset LOG_FILE
 #
+# Remove Temporary file.
+if [ -e $TEMP_FILE ] ; then
+   rm $TEMP_FILE
+fi
 # All Dun Dun noodles.
