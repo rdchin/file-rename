@@ -9,41 +9,41 @@
 # |        Default Variable Values         |
 # +----------------------------------------+
 #
-VERSION="2020-04-28 23:35"
+VERSION="2020-06-22 00:26"
 THIS_FILE="file_recursive_rename.sh"
 #
 # +----------------------------------------+
 # |            Brief Description           |
 # +----------------------------------------+
 #
-#@ Brief Description
-#@ 
-#@ 
-#@ This script will recursively rename files in the specified directory
-#@ and any sub-directories to enforce standard file naming conventions.
-#@ 
-#@ Files in hidden directories are excluded and are not renamed.
-#@ 
-#@ If you save articles from web pages as PDF files and use the title 
-#@ of the article as the PDF file name, you will probably end up with
-#@ various punctuation marks in your file name which are incompatible
-#@ or undesirable for any given Operating System (i.e. Unix, Linux,
-#@ Microsoft, Apple, Android).
-#@ 
-#@ Such file names derived from article titles often will contain
-#@ punctuation marks such as "?", "!", "/", "&", "%".
-#@ 
-#@ This script was written to enforce some of the file naming conventions
-#@ to ensure inter-Operating System compatibility.
-#@ 
-#@ It does not enforce all common file naming conventions, but only some
-#@ of the more common ones. See comments below for comprehensive list.
-#@ 
-#@ You may easily add more naming conventions in the "Start Main Program"
-#@ section of the script using the existing code as a template.
-#@ 
-#@   Usage: bash file_recursive_rename.sh <TARGET DIRECTORY>
-#@          bash file_recursive_rename.sh /home/user/Documents
+#& Brief Description
+#& 
+#& 
+#& This script will recursively rename files in the specified directory
+#& and any sub-directories to enforce standard file naming conventions.
+#& 
+#& Files in hidden directories are excluded and are not renamed.
+#& 
+#& If you save articles from web pages as PDF files and use the title 
+#& of the article as the PDF file name, you will probably end up with
+#& various punctuation marks in your file name which are incompatible
+#& or undesirable for any given Operating System (i.e. Unix, Linux,
+#& Microsoft, Apple, Android).
+#& 
+#& Such file names derived from article titles often will contain
+#& punctuation marks such as "?", "!", "/", "&", "%".
+#& 
+#& This script was written to enforce some of the file naming conventions
+#& to ensure inter-Operating System compatibility.
+#& 
+#& It does not enforce all common file naming conventions, but only some
+#& of the more common ones. See comments below for comprehensive list.
+#& 
+#& You may easily add more naming conventions in the "Start Main Program"
+#& section of the script using the existing code as a template.
+#& 
+#&   Usage: bash file_recursive_rename.sh <TARGET DIRECTORY>
+#&          bash file_recursive_rename.sh /home/user/Documents
 #
 # +----------------------------------------+
 # |             Help and Usage             |
@@ -191,7 +191,7 @@ f_abort() {
 # |          Function f_about          |
 # +------------------------------------+
 #
-#     Rev: 2020-04-28
+#     Rev: 2020-05-28
 #  Inputs: $1=GUI - "text", "dialog" or "whiptail" the preferred user-interface.
 #          THIS_DIR, THIS_FILE, VERSION.
 #    Uses: X.
@@ -212,12 +212,13 @@ f_about () {
       echo "Script: $THIS_FILE. Version: $VERSION" >$TEMP_FILE
       echo >>$TEMP_FILE
       #
-      # Display text (all lines beginning with "#@" but do not print "#@").
-      # sed substitutes null for "#@" at the beginning of each line
+      # Display text (all lines beginning ("^") with "#& " but do not print "#& ").
+      # sed substitutes null for "#& " at the beginning of each line
       # so it is not printed.
-      sed -n 's/^#@//'p $THIS_DIR/$THIS_FILE >> $TEMP_FILE
+      DELIM="^#&"
+      sed -n "s/$DELIM//"p $THIS_DIR/$THIS_FILE >> $TEMP_FILE
       #
-      f_msg_txt_file_ok $1 "OK" "About (use arrow keys to scroll up/down/side-ways)" $TEMP_FILE
+      f_message $1 "OK" "About (use arrow keys to scroll up/down/side-ways)" $TEMP_FILE
       #
 } # End of f_about.
 #
@@ -225,7 +226,7 @@ f_about () {
 # |      Function f_code_history       |
 # +------------------------------------+
 #
-#     Rev: 2020-04-20
+#     Rev: 2020-05-24
 #  Inputs: $1=GUI - "text", "dialog" or "whiptail" the preferred user-interface.
 #          THIS_DIR, THIS_FILE, VERSION.
 #    Uses: X.
@@ -246,12 +247,13 @@ f_code_history () {
       echo "Script: $THIS_FILE. Version: $VERSION" >$TEMP_FILE
       echo >>$TEMP_FILE
       #
-      # Display text (all lines beginning with "#@" but do not print "#@").
-      # sed substitutes null for "#@" at the beginning of each line
+      # Display text (all lines beginning ("^") with "##" but do not print "##").
+      # sed substitutes null for "##" at the beginning of each line
       # so it is not printed.
-      sed -n 's/^##//'p $THIS_DIR/$THIS_FILE >>$TEMP_FILE
+      DELIM="^##"
+      sed -n "s/$DELIM//"p $THIS_DIR/$THIS_FILE >> $TEMP_FILE
       #
-      f_msg_txt_file_ok text "OK" "Code History (use arrow keys to scroll up/down/side-ways)" $TEMP_FILE
+      f_message $1 "OK" "Code History (use arrow keys to scroll up/down/side-ways)" $TEMP_FILE
       #
 } # End of function f_code_history.
 #
