@@ -9,7 +9,7 @@
 # |        Default Variable Values         |
 # +----------------------------------------+
 #
-VERSION="2020-06-22 00:26"
+VERSION="2020-06-22 15:27"
 THIS_FILE="file_rename.sh"
 #
 # +----------------------------------------+
@@ -463,6 +463,138 @@ f_help_message () {
       f_message $1 "OK" "Usage (use arrow keys to scroll up/down/side-ways)" $TEMP_FILE
       #
 } # End of f_help_message.
+#
+# +------------------------------+
+# |       Function f_message     |
+# +------------------------------+
+#
+#     Rev: 2020-06-03
+#  Inputs: $1 - "text", "dialog" or "whiptail" The CLI GUI application in use.
+#          $2 - "OK"  [OK] button at end of text.
+#               "NOK" No [OK] button or "Press Enter key to continue"
+#               at end of text but pause n seconds
+#               to allow reader to read text by using sleep n command.
+#          $3 - Title.
+#          $4 - Text string or text file. 
+#          $5 - (Optional for functions f_msg_ui/txt_str_nok) Pause for $5 seconds to allow text to be read.
+#    Uses: None.
+# Outputs: ERROR.
+#   Usage: 1. f_message $GUI "OK" "Test of String in quotes" "This is a test of \Z6cyan software BASH script.\Zn\nI hope it works!"
+#
+#          2. In this example, the quotation marks around the "$STRING" variable name are required.
+#             STRING=$(echo "\"Roses are \Z1\ZbRED\Zn, Violets are \Z4BLUE\Zn, what say you?\"")
+#             f_message $GUI "OK" "Test of String in a variable" "$STRING" <---!!Note required quotation marks around variable name!!
+#
+#          3. echo "Line 1 of text file" >$TEMP_FILE
+#             echo "Line 2 of text file" >>$TEMP_FILE
+#             echo "Line 3 of text file" >>$TEMP_FILE
+#             f_message $GUI "OK" "Test of Text file" $TEMP_FILE
+#
+# This will display a title and some text using dialog/whiptail/text.
+# It will automatically calculate the optimum size of the displayed
+# Dialog or Whiptail box depending on screen resolution, number of lines
+# of text, and length of sentences to be displayed. 
+#
+# It is a lengthy function, but using it allows for an easy way to display 
+# some text (in a string or text file) using either Dialog, Whiptail or text.
+#
+# You do not have to worry about the differences in syntax between Dialog
+# and Whiptail or about calculating the box size for each text message.
+#
+f_message () {
+      #
+      case $1 in
+           "dialog" | "whiptail")
+              # Dialog boxes "--msgbox" "--infobox" can use option --colors with "\Z" commands for font color bold/normal.
+              # Dialog box "--textbox" and Whiptail cannot use option --colors with "\Z" commands for font color bold/normal.
+              #
+              # If text strings have Dialog "\Z" commands for font color bold/normal, 
+              # they must be used AFTER \n (line break) commands.
+              # Example: "This is a test.\n\Z1\ZbThis is in bold-red letters.\n\ZnThis is in normal font."
+              #
+              # Get the screen resolution or X-window size.
+              # Get rows (height).
+              YSCREEN=$(stty size | awk '{ print $1 }')
+              # Get columns (width).
+              XSCREEN=$(stty size | awk '{ print $2 }')
+              #
+              # Is $4 a text string or a text file?
+              if [ -r "$4" ] ; then
+                 #
+                 # If $4 is a text file, then calculate number of lines and length
+                 # of sentences to calculate height and width of Dialog box.
+                 # Calculate dialog/whiptail box dimensions $YBOX, $XBOX.
+                 f_msg_ui_file_box_size $1 $2 "$3" "$4"
+                 #
+                 if [ "$2" = "OK" ] ; then
+                    # Display contents of text file with an [OK] button.
+                    f_msg_ui_file_ok $1 $2 "$3" "$4" $YBOX $XBOX
+                 else
+                    # Display contents of text file with a pause for n seconds.
+                    f_msg_ui_file_nok $1 $2 "$3" "$4" $YBOX $XBOX
+                 fi
+                 #
+              else
+                 # If $4 is a text string, then does it contain just one
+                 # sentence or multiple sentences delimited by "\n"?
+                 # Calculate the length of the longest of sentence.
+                 # Calculate dialog/whiptail box dimensions $YBOX, $XBOX.
+                 f_msg_ui_str_box_size $1 $2 "$3" "$4"
+                 #
+                 if [ "$2" = "OK" ] ; then
+                    # Display contents of text string with an [OK] button.
+                    f_msg_ui_str_ok $1 $2 "$3" "$4" $YBOX $XBOX
+                 else
+                    # Display contents of text string with a pause for n seconds.
+                    f_msg_ui_str_nok $1 $2 "$3" "$4" $YBOX $XBOX "$5"
+                 fi
+              fi
+              ;;
+           *)
+              #
+              # Text only.
+              # Is $4 a text string or a text file?
+              #
+              # Change font color according to Dialog "\Z" commands.
+              # Replace font color "\Z" commands with "tput" commands.
+              # Output result to string $ZNO.
+              f_msg_color "$4"
+              #
+              if [ -r "$4" ] ; then
+                 # If $4 is a text file.
+                 #
+                 if [ "$2" = "OK" ] ; then
+                    # Display contents of text file using command "less" <q> to quit.
+                    f_msg_txt_file_ok $1 $2 "$3" "$4"
+                 else
+                    f_msg_txt_file_nok $1 $2 "$3" "$4" "$5"
+                    # Display contents of text file using command "cat" then pause for n seconds.
+                 fi
+                 #
+              else
+                 # If $4 is a text string.
+                 #
+                 if [ "$2" = "OK" ] ; then
+                    # Display contents of text string using command "echo -e" then
+                    # use f_press_enter_key_to_continue.
+                    f_msg_txt_str_ok $1 $2 "$3" "$ZNO"
+                 else
+                    # Display contents of text string using command "echo -e" then pause for n seconds.
+                    f_msg_txt_str_nok $1 $2 "$3" "$ZNO" "$5"
+                 fi
+              fi
+              #
+              # Restore default font color.
+              echo -n $(tput sgr0)
+              #
+           ;;
+      esac
+      #
+      if [ -r $TEMP_FILE ] ; then
+         rm $TEMP_FILE
+      fi
+      #
+} # End of function f_message.
 #
 # +------------------------------+
 # |  Function f_msg_txt_file_ok  |
