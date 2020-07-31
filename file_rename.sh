@@ -9,7 +9,7 @@
 # |        Default Variable Values         |
 # +----------------------------------------+
 #
-VERSION="2020-06-22 15:27"
+VERSION="2020-07-09 21:14"
 THIS_FILE="file_rename.sh"
 #
 # +----------------------------------------+
@@ -53,13 +53,16 @@ THIS_FILE="file_rename.sh"
 # |             Help and Usage             |
 # +----------------------------------------+
 #
-#?    Usage: bash file_rename.sh
-#?           bash file_rename.sh [OPTION]
-#?           bash file_rename.sh [Target_Directory]
+#?    Usage: bash file_rename.sh [OPTION]
+#?           bash file_rename.sh [Target_Directory] [text/dialog/whiptail]
 #?
 #? Examples:
-#?
+#? Rename files in TARGET directory.
+#? 
 #?bash file_rename.sh [Target_Directory] # Run script on target directory.
+#?bash file_rename.sh [Target_Directory] dialog.
+#?bash file_rename.sh [Target_Directory] whiptail.
+#?bash file_rename.sh [Target_Directory] text.
 #?
 #?bash file_rename.sh --help     # Displays this help message.
 #?                    -?
@@ -81,6 +84,15 @@ THIS_FILE="file_rename.sh"
 ## (After each edit made, please update Code History and VERSION.)
 ##
 ## CODE HISTORY
+##
+## 2020-06-27 *f_display_common, f_about, f_code_history, f_help_message
+##             rewritten to simplify code.
+##
+## 2020-06-26 *Main Program added acceptance of 2 arguments.
+##            *f_arguments updated to latest standards.
+##
+## 2020-06-25 *Decision made not to be dependent on "common_bash_function.lib"
+##             to limit size.
 ##
 ## 2020-04-28 *Main Program updated to latest standards.
 ##
@@ -172,17 +184,18 @@ f_script_path () {
       #
 } # End of function f_script_path.
 #
-# +----------------------------------------+
-# |         Function f_arguments           |
-# +----------------------------------------+
-#
-#     Rev: 2020-06-21
+#     Rev: 2020-06-27
 #  Inputs: $1=Argument
 #             [--help] [ -h ] [ -? ]
 #             [--about]
 #             [--version] [ -ver ] [ -v ] [--about ]
 #             [--history] [--hist ]
 #             [] [ text ] [ dialog ] [ whiptail ]
+#             [ --help dialog ]  [ --help whiptail ]
+#             [ --about dialog ] [ --about whiptail ]
+#             [ --hist dialog ]  [ --hist whiptail ]
+#          $2=Argument
+#             [ text ] [ dialog ] [ whiptail ] 
 #    Uses: None.
 # Outputs: GUI, ERROR.
 #
@@ -363,34 +376,22 @@ f_abort() {
 # |          Function f_about          |
 # +------------------------------------+
 #
-#     Rev: 2020-05-28
+#     Rev: 2020-06-27
 #  Inputs: $1=GUI - "text", "dialog" or "whiptail" the preferred user-interface.
 #          THIS_DIR, THIS_FILE, VERSION.
-#    Uses: X.
+#    Uses: DELIM.
 # Outputs: None.
 #
+#    NOTE: This function needs to be in the same library or file as
+#          the function f_display_common.
+#
 f_about () {
-      #
-      # Specify $THIS_FILE name of any file containing the text to be displayed.
-      THIS_FILE="file_rename.sh"
-      TEMP_FILE=$THIS_DIR/$THIS_FILE"_temp.txt"
-      #
-      # Set $VERSION according as it is set in the beginning of $THIS_FILE.
-      X=$(grep --max-count=1 "VERSION" $THIS_FILE)
-      # X="VERSION=YYYY-MM-DD HH:MM"
-      # Use command "eval" to set $VERSION.
-      eval $X
-      #
-      echo "Script: $THIS_FILE. Version: $VERSION" >$TEMP_FILE
-      echo >>$TEMP_FILE
       #
       # Display text (all lines beginning ("^") with "#& " but do not print "#& ").
       # sed substitutes null for "#& " at the beginning of each line
       # so it is not printed.
       DELIM="^#&"
-      sed -n "s/$DELIM//"p $THIS_DIR/$THIS_FILE >> $TEMP_FILE
-      #
-      f_message $1 "OK" "About (use arrow keys to scroll up/down/side-ways)" $TEMP_FILE
+      f_display_common $1 $DELIM
       #
 } # End of f_about.
 #
@@ -398,34 +399,22 @@ f_about () {
 # |      Function f_code_history       |
 # +------------------------------------+
 #
-#     Rev: 2020-05-24
+#     Rev: 2020-06-27
 #  Inputs: $1=GUI - "text", "dialog" or "whiptail" the preferred user-interface.
 #          THIS_DIR, THIS_FILE, VERSION.
-#    Uses: X.
+#    Uses: DELIM.
 # Outputs: None.
 #
+#    NOTE: This function needs to be in the same library or file as
+#          the function f_display_common.
+#
 f_code_history () {
-      #
-      # Specify $THIS_FILE name of any file containing the text to be displayed.
-      THIS_FILE="file_rename.sh"
-      TEMP_FILE=$THIS_DIR/$THIS_FILE"_temp.txt"
-      #
-      # Set $VERSION according as it is set in the beginning of $THIS_FILE.
-      X=$(grep --max-count=1 "VERSION" $THIS_FILE)
-      # X="VERSION=YYYY-MM-DD HH:MM"
-      # Use command "eval" to set $VERSION.
-      eval $X
-      #
-      echo "Script: $THIS_FILE. Version: $VERSION" >$TEMP_FILE
-      echo >>$TEMP_FILE
       #
       # Display text (all lines beginning ("^") with "##" but do not print "##").
       # sed substitutes null for "##" at the beginning of each line
       # so it is not printed.
       DELIM="^##"
-      sed -n "s/$DELIM//"p $THIS_DIR/$THIS_FILE >> $TEMP_FILE
-      #
-      f_message $1 "OK" "Code History (use arrow keys to scroll up/down/side-ways)" $TEMP_FILE
+      f_display_common $1 $DELIM
       #
 } # End of function f_code_history.
 #
@@ -433,16 +422,52 @@ f_code_history () {
 # |      Function f_help_message       |
 # +------------------------------------+
 #
-#     Rev: 2020-05-24
+#     Rev: 2020-06-27
 #  Inputs: $1=GUI - "text", "dialog" or "whiptail" the preferred user-interface.
+#          THIS_DIR, THIS_FILE, VERSION.
+#    Uses: DELIM.
+# Outputs: None.
+#
+#    NOTE: This function needs to be in the same library or file as
+#          the function f_display_common.
+#
+f_help_message () {
+      #
+      # Display text (all lines beginning ("^") with "#?" but do not print "#?").
+      # sed substitutes null for "#?" at the beginning of each line
+      # so it is not printed.
+      DELIM="^#?"
+      f_display_common $1 $DELIM
+      #
+} # End of f_help_message.
+#
+# +------------------------------------+
+# |     Function f_display_common      |
+# +------------------------------------+
+#
+#     Rev: 2020-06-27
+#  Inputs: $1=GUI - "text", "dialog" or "whiptail" the preferred user-interface.
+#          $2=Delimiter of text to be displayed.
 #          THIS_DIR, THIS_FILE, VERSION.
 #    Uses: X.
 # Outputs: None.
 #
-f_help_message () {
+f_display_common () {
       #
-      # Specify $THIS_FILE name of any file containing the text to be displayed.
-      THIS_FILE="file_rename.sh"
+      # Specify $THIS_FILE name of the file containing the text to be displayed.
+      # $THIS_FILE may be re-defined inadvertently when a library file defines it
+      # so when the command, source [ LIBRARY_FILE.lib ] is used, $THIS_FILE is
+      # redefined to the name of the library file, LIBRARY_FILE.lib.
+      # For that reason, all library files now have the line
+      # THIS_FILE="[LIBRARY_FILE.lib]" deleted.
+      #
+      #================================================================================
+      # EDIT THE LINE BELOW TO DEFINE $THIS_FILE AS THE ACTUAL FILE NAME WHERE THE 
+      # ABOUT, CODE HISTORY, AND HELP MESSAGE TEXT IS LOCATED.
+      #================================================================================
+                                           #
+      THIS_FILE="file_rename.sh"  # <<<--- INSERT ACTUAL FILE NAME HERE.
+                                           #
       TEMP_FILE=$THIS_DIR/$THIS_FILE"_temp.txt"
       #
       # Set $VERSION according as it is set in the beginning of $THIS_FILE.
@@ -451,150 +476,17 @@ f_help_message () {
       # Use command "eval" to set $VERSION.
       eval $X
       #
-      echo "Script: $THIS_FILE. Version: $VERSION" >$TEMP_FILE
+      echo "Script: $THIS_FILE. Version: $VERSION" > $TEMP_FILE
       echo >>$TEMP_FILE
       #
-      # Display text (all lines beginning ("^") with "#?" but do not print "#?").
-      # sed substitutes null for "#?" at the beginning of each line
+      # Display text (all lines beginning ("^") with $2 but do not print $2).
+      # sed substitutes null for $2 at the beginning of each line
       # so it is not printed.
-      DELIM="^#?"
-      sed -n "s/$DELIM//"p $THIS_DIR/$THIS_FILE >> $TEMP_FILE
+      sed -n "s/$2//"p $THIS_DIR/$THIS_FILE >> $TEMP_FILE
       #
-      f_message $1 "OK" "Usage (use arrow keys to scroll up/down/side-ways)" $TEMP_FILE
+      f_msg_txt_file_ok $1 "OK" "Code History (use arrow keys to scroll up/down/side-ways)" $TEMP_FILE
       #
-} # End of f_help_message.
-#
-# +------------------------------+
-# |       Function f_message     |
-# +------------------------------+
-#
-#     Rev: 2020-06-03
-#  Inputs: $1 - "text", "dialog" or "whiptail" The CLI GUI application in use.
-#          $2 - "OK"  [OK] button at end of text.
-#               "NOK" No [OK] button or "Press Enter key to continue"
-#               at end of text but pause n seconds
-#               to allow reader to read text by using sleep n command.
-#          $3 - Title.
-#          $4 - Text string or text file. 
-#          $5 - (Optional for functions f_msg_ui/txt_str_nok) Pause for $5 seconds to allow text to be read.
-#    Uses: None.
-# Outputs: ERROR.
-#   Usage: 1. f_message $GUI "OK" "Test of String in quotes" "This is a test of \Z6cyan software BASH script.\Zn\nI hope it works!"
-#
-#          2. In this example, the quotation marks around the "$STRING" variable name are required.
-#             STRING=$(echo "\"Roses are \Z1\ZbRED\Zn, Violets are \Z4BLUE\Zn, what say you?\"")
-#             f_message $GUI "OK" "Test of String in a variable" "$STRING" <---!!Note required quotation marks around variable name!!
-#
-#          3. echo "Line 1 of text file" >$TEMP_FILE
-#             echo "Line 2 of text file" >>$TEMP_FILE
-#             echo "Line 3 of text file" >>$TEMP_FILE
-#             f_message $GUI "OK" "Test of Text file" $TEMP_FILE
-#
-# This will display a title and some text using dialog/whiptail/text.
-# It will automatically calculate the optimum size of the displayed
-# Dialog or Whiptail box depending on screen resolution, number of lines
-# of text, and length of sentences to be displayed. 
-#
-# It is a lengthy function, but using it allows for an easy way to display 
-# some text (in a string or text file) using either Dialog, Whiptail or text.
-#
-# You do not have to worry about the differences in syntax between Dialog
-# and Whiptail or about calculating the box size for each text message.
-#
-f_message () {
-      #
-      case $1 in
-           "dialog" | "whiptail")
-              # Dialog boxes "--msgbox" "--infobox" can use option --colors with "\Z" commands for font color bold/normal.
-              # Dialog box "--textbox" and Whiptail cannot use option --colors with "\Z" commands for font color bold/normal.
-              #
-              # If text strings have Dialog "\Z" commands for font color bold/normal, 
-              # they must be used AFTER \n (line break) commands.
-              # Example: "This is a test.\n\Z1\ZbThis is in bold-red letters.\n\ZnThis is in normal font."
-              #
-              # Get the screen resolution or X-window size.
-              # Get rows (height).
-              YSCREEN=$(stty size | awk '{ print $1 }')
-              # Get columns (width).
-              XSCREEN=$(stty size | awk '{ print $2 }')
-              #
-              # Is $4 a text string or a text file?
-              if [ -r "$4" ] ; then
-                 #
-                 # If $4 is a text file, then calculate number of lines and length
-                 # of sentences to calculate height and width of Dialog box.
-                 # Calculate dialog/whiptail box dimensions $YBOX, $XBOX.
-                 f_msg_ui_file_box_size $1 $2 "$3" "$4"
-                 #
-                 if [ "$2" = "OK" ] ; then
-                    # Display contents of text file with an [OK] button.
-                    f_msg_ui_file_ok $1 $2 "$3" "$4" $YBOX $XBOX
-                 else
-                    # Display contents of text file with a pause for n seconds.
-                    f_msg_ui_file_nok $1 $2 "$3" "$4" $YBOX $XBOX
-                 fi
-                 #
-              else
-                 # If $4 is a text string, then does it contain just one
-                 # sentence or multiple sentences delimited by "\n"?
-                 # Calculate the length of the longest of sentence.
-                 # Calculate dialog/whiptail box dimensions $YBOX, $XBOX.
-                 f_msg_ui_str_box_size $1 $2 "$3" "$4"
-                 #
-                 if [ "$2" = "OK" ] ; then
-                    # Display contents of text string with an [OK] button.
-                    f_msg_ui_str_ok $1 $2 "$3" "$4" $YBOX $XBOX
-                 else
-                    # Display contents of text string with a pause for n seconds.
-                    f_msg_ui_str_nok $1 $2 "$3" "$4" $YBOX $XBOX "$5"
-                 fi
-              fi
-              ;;
-           *)
-              #
-              # Text only.
-              # Is $4 a text string or a text file?
-              #
-              # Change font color according to Dialog "\Z" commands.
-              # Replace font color "\Z" commands with "tput" commands.
-              # Output result to string $ZNO.
-              f_msg_color "$4"
-              #
-              if [ -r "$4" ] ; then
-                 # If $4 is a text file.
-                 #
-                 if [ "$2" = "OK" ] ; then
-                    # Display contents of text file using command "less" <q> to quit.
-                    f_msg_txt_file_ok $1 $2 "$3" "$4"
-                 else
-                    f_msg_txt_file_nok $1 $2 "$3" "$4" "$5"
-                    # Display contents of text file using command "cat" then pause for n seconds.
-                 fi
-                 #
-              else
-                 # If $4 is a text string.
-                 #
-                 if [ "$2" = "OK" ] ; then
-                    # Display contents of text string using command "echo -e" then
-                    # use f_press_enter_key_to_continue.
-                    f_msg_txt_str_ok $1 $2 "$3" "$ZNO"
-                 else
-                    # Display contents of text string using command "echo -e" then pause for n seconds.
-                    f_msg_txt_str_nok $1 $2 "$3" "$ZNO" "$5"
-                 fi
-              fi
-              #
-              # Restore default font color.
-              echo -n $(tput sgr0)
-              #
-           ;;
-      esac
-      #
-      if [ -r $TEMP_FILE ] ; then
-         rm $TEMP_FILE
-      fi
-      #
-} # End of function f_message.
+} # End of function f_display_common.
 #
 # +------------------------------+
 # |  Function f_msg_txt_file_ok  |
@@ -643,7 +535,7 @@ f_script_path
 LOG_FILE="file_rename_$(date +%Y-%m-%d-%H%M.%S%N).log"
 #
 # Test for Optional Arguments.
-f_arguments $1  # Also sets variable GUI.
+f_arguments $1 $2  # Also sets variable GUI.
 #
 # Does the Target Directory exist?
 if [ ! -d $1 ] ; then
