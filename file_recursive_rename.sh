@@ -9,7 +9,7 @@
 # |        Default Variable Values         |
 # +----------------------------------------+
 #
-VERSION="2020-07-09 21:14"
+VERSION="2020-08-08 17:54"
 THIS_FILE="file_recursive_rename.sh"
 #
 # +----------------------------------------+
@@ -17,7 +17,6 @@ THIS_FILE="file_recursive_rename.sh"
 # +----------------------------------------+
 #
 #& Brief Description
-#& 
 #& 
 #& This script will recursively rename files in the specified directory
 #& and any sub-directories to enforce standard file naming conventions.
@@ -66,6 +65,11 @@ THIS_FILE="file_recursive_rename.sh"
 #?
 #?bash file_recursive_rename.sh --history  # Displays script code history.
 #?                              --hist
+#?
+#? Examples using 2 arguments:
+#?
+#?bash example.sh --hist text
+#?                --ver dialog
 #
 # +----------------------------------------+
 # |           Code Change History          |
@@ -76,6 +80,8 @@ THIS_FILE="file_recursive_rename.sh"
 ## (After each edit made, please update Code History and VERSION.)
 ##
 ## CODE HISTORY
+##
+## 2020-08-08 *Updated to latest standards.
 ##
 ## 2020-07-09 *Main Program added view and deleting of log file. 
 ##
@@ -241,30 +247,44 @@ f_arguments () {
 }  # End of function f_arguments.
 #
 # +----------------------------------------+
-# |            Function f_abort            |
+# |              Function f_abort          |
 # +----------------------------------------+
 #
-#  Inputs: LOG_FILE.
-#    Uses: RUNAPP, TEMP_FILE, FILEVR, X.
+#     Rev: 2020-05-28
+#  Inputs: $1=GUI.
+#    Uses: None.
 # Outputs: None.
 #
-f_abort() {
-      echo $(tput setaf 1) # Set font to color red.
-      echo "***************" |  tee -a $LOG_FILE
-      echo "*** ABORTED ***" |  tee -a $LOG_FILE
-      echo "***************" |  tee -a $LOG_FILE
-      echo |  tee -a $LOG_FILE*
-      echo "An error occurred. Exiting..." |  tee -a $LOG_FILE
-      echo -n $(tput sgr0) # Set font to normal color.
+f_abort () {
+      #
+      # Temporary file has \Z commands embedded for red bold font.
+      #
+      # \Z commands are used by Dialog to change font attributes 
+      # such as color, bold/normal.
+      #
+      # A single string is used with echo -e \Z1\Zb\Zn commands
+      # and output as a single line of string wit \Zn commands embedded.
+      #
+      # Single string is neccessary because \Z commands will not be
+      # recognized in a temp file containing <CR><LF> multiple lines also.
+      #
+      f_message $1 "NOK" "Exiting script" " \Z1\ZbAn error occurred, cannot continue. Exiting script.\Zn"
       exit 1
-} # End of function f_abort
+      #
+      if [ -r  $TEMP_FILE ] ; then
+         rm  $TEMP_FILE
+      fi
+      #
+} # End of function f_abort.
 #
 # +------------------------------------+
 # |          Function f_about          |
 # +------------------------------------+
 #
-#     Rev: 2020-06-27
+#     Rev: 2020-08-07
 #  Inputs: $1=GUI - "text", "dialog" or "whiptail" the preferred user-interface.
+#          $2="NOK", "OK", or null [OPTIONAL] to control display of "OK" button.
+#          $3=Pause $3 seconds [OPTIONAL]. If "NOK" then pause to allow text to be read.
 #          THIS_DIR, THIS_FILE, VERSION.
 #    Uses: DELIM.
 # Outputs: None.
@@ -278,7 +298,7 @@ f_about () {
       # sed substitutes null for "#& " at the beginning of each line
       # so it is not printed.
       DELIM="^#&"
-      f_display_common $1 $DELIM
+      f_display_common $1 $DELIM $2 $3
       #
 } # End of f_about.
 #
@@ -286,8 +306,10 @@ f_about () {
 # |      Function f_code_history       |
 # +------------------------------------+
 #
-#     Rev: 2020-06-27
+#     Rev: 2020-08-07
 #  Inputs: $1=GUI - "text", "dialog" or "whiptail" the preferred user-interface.
+#          $2="NOK", "OK", or null [OPTIONAL] to control display of "OK" button.
+#          $3=Pause $3 seconds [OPTIONAL]. If "NOK" then pause to allow text to be read.
 #          THIS_DIR, THIS_FILE, VERSION.
 #    Uses: DELIM.
 # Outputs: None.
@@ -301,7 +323,7 @@ f_code_history () {
       # sed substitutes null for "##" at the beginning of each line
       # so it is not printed.
       DELIM="^##"
-      f_display_common $1 $DELIM
+      f_display_common $1 $DELIM $2 $3
       #
 } # End of function f_code_history.
 #
@@ -309,8 +331,10 @@ f_code_history () {
 # |      Function f_help_message       |
 # +------------------------------------+
 #
-#     Rev: 2020-06-27
+#     Rev: 2020-08-07
 #  Inputs: $1=GUI - "text", "dialog" or "whiptail" the preferred user-interface.
+#          $2="NOK", "OK", or null [OPTIONAL] to control display of "OK" button.
+#          $3=Pause $3 seconds [OPTIONAL]. If "NOK" then pause to allow text to be read.
 #          THIS_DIR, THIS_FILE, VERSION.
 #    Uses: DELIM.
 # Outputs: None.
@@ -324,7 +348,7 @@ f_help_message () {
       # sed substitutes null for "#?" at the beginning of each line
       # so it is not printed.
       DELIM="^#?"
-      f_display_common $1 $DELIM
+      f_display_common $1 $DELIM $2 $3
       #
 } # End of f_help_message.
 #
@@ -332,12 +356,18 @@ f_help_message () {
 # |     Function f_display_common      |
 # +------------------------------------+
 #
-#     Rev: 2020-06-27
+#     Rev: 2020-08-07
 #  Inputs: $1=GUI - "text", "dialog" or "whiptail" the preferred user-interface.
 #          $2=Delimiter of text to be displayed.
+#          $3="NOK", "OK", or null [OPTIONAL] to control display of "OK" button.
+#          $4=Pause $4 seconds [OPTIONAL]. If "NOK" then pause to allow text to be read.
 #          THIS_DIR, THIS_FILE, VERSION.
 #    Uses: X.
 # Outputs: None.
+#
+# PLEASE NOTE: RENAME THIS FUNCTION WITHOUT SUFFIX "_TEMPLATE" AND COPY
+#              THIS FUNCTION INTO ANY SCRIPT WHICH DEPENDS ON THE
+#              LIBRARY FILE "common_bash_function.lib".
 #
 f_display_common () {
       #
@@ -353,7 +383,7 @@ f_display_common () {
       # ABOUT, CODE HISTORY, AND HELP MESSAGE TEXT IS LOCATED.
       #================================================================================
                                            #
-      THIS_FILE="file_recursive_rename.sh"  # <<<--- INSERT ACTUAL FILE NAME HERE.
+      THIS_FILE="file_recursive_rename.sh" # <<<--- INSERT ACTUAL FILE NAME HERE.
                                            #
       TEMP_FILE=$THIS_DIR/$THIS_FILE"_temp.txt"
       #
@@ -371,7 +401,14 @@ f_display_common () {
       # so it is not printed.
       sed -n "s/$2//"p $THIS_DIR/$THIS_FILE >> $TEMP_FILE
       #
-      f_msg_txt_file_ok $1 $TEMP_FILE
+      case $3 in
+           "NOK" | "nok")
+              f_message $1 "NOK" "Message" $TEMP_FILE $4
+           ;;
+           *)
+              f_message $1 "OK" "(use arrow keys to scroll up/down/side-ways)" $TEMP_FILE
+           ;;
+      esac
       #
 } # End of function f_display_common.
 #
@@ -408,6 +445,13 @@ f_msg_txt_file_ok () {
 # Outputs: None.
 #
 clear  # Blank the screen.
+#
+echo "Running script $THIS_FILE"
+echo "***   Rev. $VERSION   ***"
+echo
+sleep 1  # pause for 1 second automatically.
+#
+clear # Blank the screen.
 #
 # Set THIS_DIR, SCRIPT_PATH to directory path of script.
 f_script_path
