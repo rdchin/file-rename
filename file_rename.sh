@@ -1,16 +1,105 @@
 #!/bin/bash
 #
-# ©2020 Copyright 2020 Robert D. Chin
+# ©2021 Copyright 2021 Robert D. Chin
+# Email: RDevChin@Gmail.com
 #
-# Usage: bash file_rename.sh <TARGET DIRECTORY>
-#        (not sh file_rename.sh)
+#   Usage: bash file_rename.sh <TARGET DIRECTORY>
+#          bash file_rename.sh <TARGET DIRECTORY> dialog/whiptail/text
+#          bash file_rename.sh /home/user/Documents
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program. If not, see <https://www.gnu.org/licenses/>.
+#
+# +--------------------------------------------------------------------------+
+# |                                                                          |
+# |                 Customize Menu choice options below.                     |
+# |                                                                          |
+# +--------------------------------------------------------------------------+
+#
+#  Format: <#@@> <Menu Option> <#@@> <Description of Menu Option> <#@@> <Corresponding function or action or cammand>
+# WARNING: Text strings cannot include apostrophes (').
+#
+#@@Exit#@@Exit this menu.#@@break
+#
+#@@Rename Files#@@Rename files to standards.#@@f_main_start^$GUI
+#
+#@@About#@@Version information of this script.#@@f_about^$GUI
+#
+#@@Code History#@@Display code change history of this script.#@@f_code_history^$GUI
+#
+#@@Version Update#@@Check for updates to this script and download.#@@f_check_version^$GUI
+#
+#@@Help#@@Display help message.#@@f_help_message^$GUI
 #
 # +----------------------------------------+
 # |        Default Variable Values         |
 # +----------------------------------------+
 #
-VERSION="2020-08-08 17:54"
-THIS_FILE="file_rename.sh"
+VERSION="2021-04-19 13:00"
+THIS_FILE=$(basename $0)
+TEMP_FILE=$THIS_FILE"_temp.txt"
+#
+#
+#================================================================
+# EDIT THE LINES BELOW TO SET REPOSITORY SERVERS AND DIRECTORIES
+# AND TO INCLUDE ALL DEPENDENT SCRIPTS AND LIBRARIES TO DOWNLOAD.
+#================================================================
+#
+#
+#--------------------------------------------------------------
+# Set variables to mount the Local Repository to a mount-point.
+#--------------------------------------------------------------
+#
+# LAN File Server shared directory.
+# SERVER_DIR="[FILE_SERVER_DIRECTORY_NAME_GOES_HERE]"
+  SERVER_DIR="//file_server/public"
+#
+# Local PC mount-point directory.
+# MP_DIR="[LOCAL_MOUNT-POINT_DIRECTORY_NAME_GOES_HERE]"
+  MP_DIR="/mnt/file_server/public"
+#
+# Local PC mount-point with LAN File Server Local Repository full directory path.
+# Example: 
+#                   File server shared directory is "//file_server/public".
+# Repostory directory under the shared directory is "scripts/BASH/Repository".
+#                 Local PC Mount-point directory is "/mnt/file_server/public".
+#
+# LOCAL_REPO_DIR="$MP_DIR/[DIRECTORY_PATH_TO_LOCAL_REPOSITORY]"
+  LOCAL_REPO_DIR="$MP_DIR/scripts/BASH/Repository"
+#
+#
+#=================================================================
+# EDIT THE LINES BELOW TO SPECIFY THE FILE NAMES TO UPDATE.
+# FILE NAMES INCLUDE ALL DEPENDENT SCRIPTS LIBRARIES.
+#=================================================================
+#
+#
+# --------------------------------------------
+# Create a list of all dependent library files
+# and write to temporary file, FILE_LIST.
+# --------------------------------------------
+#
+# Temporary file FILE_LIST contains a list of file names of dependent
+# scripts and libraries.
+#
+FILE_LIST=$THIS_FILE"_file_temp.txt"
+#
+# Format: [File Name]^[Local/Web]^[Local repository directory]^[web repository directory]
+echo "common_bash_function.lib^Web^$LOCAL_REPO_DIR^https://raw.githubusercontent.com/rdchin/BASH_function_library/master/"  >> $FILE_LIST
+#
+# Create a name for a temporary file which will have a list of files which need to be downloaded.
+FILE_DL_LIST=$THIS_FILE"_file_dl_temp.txt"
 #
 # +----------------------------------------+
 # |            Brief Description           |
@@ -38,16 +127,6 @@ THIS_FILE="file_rename.sh"
 #& 
 #&   Usage: bash file_rename.sh <TARGET DIRECTORY>
 #&          bash file_rename.sh /home/user/Documents
-#& 
-#& 
-#&              Compatible file names for most Operating Systems
-#& 
-#& Do not use the following characters:
-#& # pound          < left angle bracket   $ dollar sign        + plus sign
-#& % percent        > right angle bracket  ! exclamation point  ` backtick
-#& & ampersand      * asterisk             ' single quotes      | pipe
-#& { left bracket   ? question mark        " double quotes      = equal sign
-#& } right bracket  blank spaces           : colon              @ at sign
 #
 # +----------------------------------------+
 # |             Help and Usage             |
@@ -59,26 +138,56 @@ THIS_FILE="file_rename.sh"
 #? Examples:
 #? Rename files in TARGET directory.
 #? 
-#?bash file_rename.sh [Target_Directory] # Run script on target directory.
-#?bash file_rename.sh [Target_Directory] dialog.
-#?bash file_rename.sh [Target_Directory] whiptail.
-#?bash file_rename.sh [Target_Directory] text.
+#? bash file_rename.sh [Target_Directory] # Run script on target directory.
+#? bash file_rename.sh [Target_Directory] dialog.
+#? bash file_rename.sh [Target_Directory] whiptail.
+#? bash file_rename.sh [Target_Directory] text.
 #?
-#?bash file_rename.sh --help     # Displays this help message.
-#?                    -?
+#? bash file_rename.sh --help     # Displays this help message.
+#?                     -?
 #?
-#?bash file_rename.sh --about    # Displays script version.
-#?                    --version
-#?                    --ver
-#?                    -v
+#? bash file_rename.sh --about    # Displays script version.
+#?                     --version
+#?                     --ver
+#?                     -v
 #?
-#?bash file_rename.sh --history  # Displays script code history.
-#?                    --hist
+#? bash file_rename.sh --history  # Displays script code history.
+#?                     --hist
 #?
 #? Examples using 2 arguments:
 #?
-#?bash example.sh --hist text
-#?                --ver dialog
+#? bash example.sh --hist text
+#?                 --ver dialog
+#
+# +----------------------------------------+
+# |                Code Notes              |
+# +----------------------------------------+
+#
+# To disable the [ OPTION ] --update -u to update the script:
+#    1) Comment out the call to function fdl_download_missing_scripts in
+#       Section "Start of Main Program".
+#
+# To completely delete the [ OPTION ] --update -u to update the script:
+#    1) Delete the call to function fdl_download_missing_scripts in
+#       Section "Start of Main Program".
+#    2) Delete all functions beginning with "f_dl"
+#    3) Delete instructions to update script in Section "Help and Usage".
+#
+# To disable the Main Menu:
+#    1) Comment out the call to function f_menu_main under "Run Main Code"
+#       in Section "Start of Main Program".
+#    2) Add calls to desired functions under "Run Main Code"
+#       in Section "Start of Main Program".
+#
+# To completely remove the Main Menu and its code:
+#    1) Delete the call to function f_menu_main under "Run Main Code" in
+#       Section "Start of Main Program".
+#    2) Add calls to desired functions under "Run Main Code"
+#       in Section "Start of Main Program".
+#    3) Delete the function f_menu_main.
+#    4) Delete "Menu Choice Options" in this script located under
+#       Section "Customize Menu choice options below".
+#       The "Menu Choice Options" lines begin with "#@@".
 #
 # +----------------------------------------+
 # |           Code Change History          |
@@ -90,6 +199,15 @@ THIS_FILE="file_rename.sh"
 ##
 ## CODE HISTORY
 ##
+## 2021-04-19 *Updated to latest standards with extensive code changes.
+##             Now uses common_bash_function.lib and added a Main Menu and
+##             ability to download missing files and do a version update.
+##
+## 2020-08-26 *f_check_command_rename improved messages.
+##            *Decision made not to be dependent on library of functions,
+##             "common_bash_function.lib" for maximum portability.
+##
+##
 ## 2020-08-08 *Updated to latest standards.
 ##
 ## 2020-06-27 *f_display_common, f_about, f_code_history, f_help_message
@@ -98,8 +216,8 @@ THIS_FILE="file_rename.sh"
 ## 2020-06-26 *Main Program added acceptance of 2 arguments.
 ##            *f_arguments updated to latest standards.
 ##
-## 2020-06-25 *Decision made not to be dependent on "common_bash_function.lib"
-##             to limit size.
+## 2020-06-25 *Decision made not to be dependent on library of functions,
+##             "common_bash_function.lib" for maximum portability.
 ##
 ## 2020-04-28 *Main Program updated to latest standards.
 ##
@@ -115,13 +233,15 @@ THIS_FILE="file_rename.sh"
 ##            *Main Program unset LOG_FILE at end of script.
 ##
 ## 2019-04-29 *Main Program deleted substitution of strings containing
-##             forward-slash or back-slash to prevent file directory corruption.
+##             forward-slash or back-slash to prevent file directory
+##             corruption.
 ##
 ## 2019-04-08 *Main Program added more substitution strings.
 ##
-## 2018-06-28 *Main Program added the "-verbose" option to the "rename" command
-##             "rename -verbose 's/search-string/replacement-string/g'
-##                     $1/* |  tee -a $LOG_FILE".
+## 2018-06-28 *Main Program added the "-verbose" option to the "rename"
+##             command 
+##             "rename -verbose 's/search-string/replacement-string/g' $1/*
+##             |  tee -a $LOG_FILE".
 ##
 ## 2018-06-07 *Rewrote script to use the rename command with a wild card
 ##             for the filename. It is much faster than using
@@ -149,329 +269,32 @@ THIS_FILE="file_rename.sh"
 ##            *f_banner simplified format of displayed messages.
 ##
 ## 2016-12-06 *f_find_and_delete, f_find_and_replace used two find commands,
-##             the first one to log the action and the second to take action.
+##             the first one to log the action, the second to take action.
 ##
 ## 2016-12-04 *Main Program, f_find_and_delete, f_find_and_replace deleted
-##             test simulation feature and add recursive sub-folder renaming.
+##             test simulation feature, added recursive sub-folder renaming.
 ##
 ## 2016-10-11 *Main Program comment corrected replacing <colon><space> with
 ##             <two-dashes>.
 ##            *Main Program Correct order of replacements.
-##             First  "Replace <colon><space> with <two-dashes> in file name"
-##             Second "Replace <colon> with <underscore> in file name."
-##             Third  "Replace <space> with <underscore> in file name."
+##             1. "Replace <colon><space> with <two-dashes> in file name"
+##             2. "Replace <colon> with <underscore> in file name."
+##             3. "Replace <space> with <underscore> in file name."
 ##            *f_abort, f_press_enter_key_to_continue added.
-##            *Main Program added check if a target directory was specified and exists.
+##            *Main Program added check if a target directory was specified
+##             and exists.
 ## 
 ## 2016-08-22 *Main Program added replace <colon><space> with <two-dashes>.
 ##             Deleted replace <colon> with <underscore>.
 ##
 ## 2016-07-20 *Initial release.
 #
-# +----------------------------------------+
-# |         Function f_script_path         |
-# +----------------------------------------+
-#
-#     Rev: 2020-04-20
-#  Inputs: $BASH_SOURCE (System variable).
-#    Uses: None.
-# Outputs: SCRIPT_PATH, THIS_DIR.
-#
-f_script_path () {
-      #
-      # BASH_SOURCE[0] gives the filename of the script.
-      # dirname "{$BASH_SOURCE[0]}" gives the directory of the script
-      # Execute commands: cd <script directory> and then pwd
-      # to get the directory of the script.
-      # NOTE: This code does not work with symlinks in directory path.
-      #
-      # !!!Non-BASH environments will give error message about line below!!!
-      SCRIPT_PATH=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-      THIS_DIR=$SCRIPT_PATH  # Set $THIS_DIR to location of this script.
-      #
-} # End of function f_script_path.
-#
-#     Rev: 2020-06-27
-#  Inputs: $1=Argument
-#             [--help] [ -h ] [ -? ]
-#             [--about]
-#             [--version] [ -ver ] [ -v ] [--about ]
-#             [--history] [--hist ]
-#             [] [ text ] [ dialog ] [ whiptail ]
-#             [ --help dialog ]  [ --help whiptail ]
-#             [ --about dialog ] [ --about whiptail ]
-#             [ --hist dialog ]  [ --hist whiptail ]
-#          $2=Argument
-#             [ text ] [ dialog ] [ whiptail ] 
-#    Uses: None.
-# Outputs: GUI, ERROR.
-#
-f_arguments () {
-      #
-      # If there is more than two arguments, display help USAGE message, because only one argument is allowed.
-      if [ $# -ge 3 ] ; then
-         f_help_message text
-         #
-         clear # Blank the screen.
-         #
-         exit 0  # This cleanly closes the process generated by #!bin/bash. 
-                 # Otherwise every time this script is run, another instance of
-                 # process /bin/bash is created using up resources.
-      fi
-      #
-      case $2 in
-           "text" | "dialog" | "whiptail")
-           GUI=$2
-           ;;
-      esac
-      #
-      case $1 in
-           --help | "-?")
-              # If the one argument is "--help" display help USAGE message.
-              if [ -z $GUI ] ; then
-                 f_help_message text
-              else
-                 f_help_message $GUI
-              fi
-              #
-              clear # Blank the screen.
-              #
-              exit 0  # This cleanly closes the process generated by #!bin/bash. 
-                      # Otherwise every time this script is run, another instance of
-                      # process /bin/bash is created using up resources.
-           ;;
-           --about | --version | --ver | -v)
-              if [ -z $GUI ] ; then
-                 f_about text
-              else
-                 f_about $GUI
-              fi
-              #
-              clear # Blank the screen.
-              #
-              exit 0  # This cleanly closes the process generated by #!bin/bash. 
-                      # Otherwise every time this script is run, another instance of
-                      # process /bin/bash is created using up resources.
-           ;;
-           --history | --hist)
-              if [ -z $GUI ] ; then
-                 f_code_history text
-              else
-                 f_code_history $GUI
-              fi
-              #
-              clear # Blank the screen.
-              #
-              exit 0  # This cleanly closes the process generated by #!bin/bash. 
-                      # Otherwise every time this script is run, another instance of
-                      # process /bin/bash is created using up resources.
-           ;;
-           -*)
-              # If the one argument is "-<unrecognized>" display help USAGE message.
-              if [ -z $GUI ] ; then
-                 f_help_message text
-              else
-                 f_help_message $GUI
-              fi
-              #
-              clear # Blank the screen.
-              #
-              exit 0  # This cleanly closes the process generated by #!bin/bash. 
-                      # Otherwise every time this script is run, another instance of
-                      # process /bin/bash is created using up resources.
-           ;;
-           "text" | "dialog" | "whiptail")
-              GUI=$1
-           ;;
-           "")
-           # No action taken as null is a legitimate and valid argument.
-           ;;
-           *)
-              # Check for 1st argument as a valid TARGET DIRECTORY.
-              if [ -d $1 ] ; then
-                 TARGET_DIR=$1
-              else
-                 # Display help USAGE message.
-                 f_message "text" "OK" "Error Invalid Directory Name" "\Zb\Z1This directory does not exist:\Zn\n $1"
-                 f_help_message "text"
-                 exit 0  # This cleanly closes the process generated by #!bin/bash. 
-                         # Otherwise every time this script is run, another instance of
-                         # process /bin/bash is created using up resources.
-              fi
-           ;;
-      esac
-      #
-}  # End of function f_arguments.
-#
-# +----------------------------------------+
-# |            Function f_banner           |
-# +----------------------------------------+
-#
-#  Inputs: $1=String, LOG_FILE.
-#    Uses: None.
-# Outputs: None.
-#
-f_banner () {
-      BANNER=$1
-      echo | tee -a $LOG_FILE
-      echo "   $BANNER" | tee -a $LOG_FILE
-      echo -n "   Start time: " | tee -a $LOG_FILE
-      date | tee -a $LOG_FILE
-}
-# End of function f_banner
-#
-# +----------------------------------------+
-# | Function f_press_enter_key_to_continue |
-# +----------------------------------------+
-#
-#  Inputs: None.
-#    Uses: X.
-# Outputs: None.
-#
-f_press_enter_key_to_continue () { # Display message and wait for user input.
-      echo
-      echo -n "Press '"Enter"' key to continue."
-      read X
-      unset X  # Throw out this variable.
-      #
-} # End of function f_press_enter_key_to_continue
-#
-# +----------------------------------------+
-# |      Function f_check_command_rename   |
-# +----------------------------------------+
-#
-#  Inputs: None.
-#    Uses: ERROR.
-# Outputs: None.
-#
-f_check_command_rename () {
-      # Is command "rename" installed and available?
-      # Use "command -v" to determine if "rename" is installed and available?
-      command -v rename >/dev/null
-      # "&>/dev/null" does not work in Debian distro.
-      # 1=standard messages, 2=error messages, &=both.
-      ERROR=$?
-      #
-      # Is the "rename" command installed and available?
-      if [ $ERROR -ne 0 ] ; then
-         # No, the "rename" command is not installed, so install command "rename".
-         sudo apt-get install rename
-      fi
-      unset ERROR
-} # End of function f_check_command_rename
-# 
-# +----------------------------------------+
-# |              Function f_abort          |
-# +----------------------------------------+
-#
-#     Rev: 2020-05-28
-#  Inputs: $1=GUI.
-#    Uses: None.
-# Outputs: None.
-#
-f_abort () {
-      #
-      # Temporary file has \Z commands embedded for red bold font.
-      #
-      # \Z commands are used by Dialog to change font attributes 
-      # such as color, bold/normal.
-      #
-      # A single string is used with echo -e \Z1\Zb\Zn commands
-      # and output as a single line of string wit \Zn commands embedded.
-      #
-      # Single string is neccessary because \Z commands will not be
-      # recognized in a temp file containing <CR><LF> multiple lines also.
-      #
-      f_message $1 "NOK" "Exiting script" " \Z1\ZbAn error occurred, cannot continue. Exiting script.\Zn"
-      exit 1
-      #
-      if [ -r  $TEMP_FILE ] ; then
-         rm  $TEMP_FILE
-      fi
-      #
-} # End of function f_abort.
-#
-# +------------------------------------+
-# |          Function f_about          |
-# +------------------------------------+
-#
-#     Rev: 2020-08-07
-#  Inputs: $1=GUI - "text", "dialog" or "whiptail" the preferred user-interface.
-#          $2="NOK", "OK", or null [OPTIONAL] to control display of "OK" button.
-#          $3=Pause $3 seconds [OPTIONAL]. If "NOK" then pause to allow text to be read.
-#          THIS_DIR, THIS_FILE, VERSION.
-#    Uses: DELIM.
-# Outputs: None.
-#
-#    NOTE: This function needs to be in the same library or file as
-#          the function f_display_common.
-#
-f_about () {
-      #
-      # Display text (all lines beginning ("^") with "#& " but do not print "#& ").
-      # sed substitutes null for "#& " at the beginning of each line
-      # so it is not printed.
-      DELIM="^#&"
-      f_display_common $1 $DELIM $2 $3
-      #
-} # End of f_about.
-#
-# +------------------------------------+
-# |      Function f_code_history       |
-# +------------------------------------+
-#
-#     Rev: 2020-08-07
-#  Inputs: $1=GUI - "text", "dialog" or "whiptail" the preferred user-interface.
-#          $2="NOK", "OK", or null [OPTIONAL] to control display of "OK" button.
-#          $3=Pause $3 seconds [OPTIONAL]. If "NOK" then pause to allow text to be read.
-#          THIS_DIR, THIS_FILE, VERSION.
-#    Uses: DELIM.
-# Outputs: None.
-#
-#    NOTE: This function needs to be in the same library or file as
-#          the function f_display_common.
-#
-f_code_history () {
-      #
-      # Display text (all lines beginning ("^") with "##" but do not print "##").
-      # sed substitutes null for "##" at the beginning of each line
-      # so it is not printed.
-      DELIM="^##"
-      f_display_common $1 $DELIM $2 $3
-      #
-} # End of function f_code_history.
-#
-# +------------------------------------+
-# |      Function f_help_message       |
-# +------------------------------------+
-#
-#     Rev: 2020-08-07
-#  Inputs: $1=GUI - "text", "dialog" or "whiptail" the preferred user-interface.
-#          $2="NOK", "OK", or null [OPTIONAL] to control display of "OK" button.
-#          $3=Pause $3 seconds [OPTIONAL]. If "NOK" then pause to allow text to be read.
-#          THIS_DIR, THIS_FILE, VERSION.
-#    Uses: DELIM.
-# Outputs: None.
-#
-#    NOTE: This function needs to be in the same library or file as
-#          the function f_display_common.
-#
-f_help_message () {
-      #
-      # Display text (all lines beginning ("^") with "#?" but do not print "#?").
-      # sed substitutes null for "#?" at the beginning of each line
-      # so it is not printed.
-      DELIM="^#?"
-      f_display_common $1 $DELIM $2 $3
-      #
-} # End of f_help_message.
-#
 # +------------------------------------+
 # |     Function f_display_common      |
 # +------------------------------------+
 #
-#     Rev: 2020-08-07
-#  Inputs: $1=GUI - "text", "dialog" or "whiptail" the preferred user-interface.
+#     Rev: 2021-03-31
+#  Inputs: $1=UI - "text", "dialog" or "whiptail" the preferred user-interface.
 #          $2=Delimiter of text to be displayed.
 #          $3="NOK", "OK", or null [OPTIONAL] to control display of "OK" button.
 #          $4=Pause $4 seconds [OPTIONAL]. If "NOK" then pause to allow text to be read.
@@ -479,26 +302,32 @@ f_help_message () {
 #    Uses: X.
 # Outputs: None.
 #
-# PLEASE NOTE: RENAME THIS FUNCTION WITHOUT SUFFIX "_TEMPLATE" AND COPY
-#              THIS FUNCTION INTO ANY SCRIPT WHICH DEPENDS ON THE
-#              LIBRARY FILE "common_bash_function.lib".
+# Synopsis: Display lines of text beginning with a given comment delimiter.
+#
+# Dependencies: f_message.
 #
 f_display_common () {
       #
-      # Specify $THIS_FILE name of the file containing the text to be displayed.
-      # $THIS_FILE may be re-defined inadvertently when a library file defines it
-      # so when the command, source [ LIBRARY_FILE.lib ] is used, $THIS_FILE is
-      # redefined to the name of the library file, LIBRARY_FILE.lib.
-      # For that reason, all library files now have the line
-      # THIS_FILE="[LIBRARY_FILE.lib]" deleted.
+      # Set $THIS_FILE to the file name containing the text to be displayed.
       #
-      #================================================================================
-      # EDIT THE LINE BELOW TO DEFINE $THIS_FILE AS THE ACTUAL FILE NAME WHERE THE 
-      # ABOUT, CODE HISTORY, AND HELP MESSAGE TEXT IS LOCATED.
-      #================================================================================
-                                           #
+      # WARNING: Do not define $THIS_FILE within a library script.
+      #
+      # This prevents $THIS_FILE being inadvertently re-defined and set to
+      # the file name of the library when the command:
+      # "source [ LIBRARY_FILE.lib ]" is used.
+      #
+      # For that reason, all library files now have the line
+      # THIS_FILE="[LIBRARY_FILE.lib]" commented out or deleted.
+      #
+      #
+      #==================================================================
+      # EDIT THE LINE BELOW TO DEFINE $THIS_FILE AS THE ACTUAL FILE NAME
+      # CONTAINING THE BRIEF DESCRIPTION, CODE HISTORY, AND HELP MESSAGE.
+      #==================================================================
+      #
+      #
       THIS_FILE="file_rename.sh"  # <<<--- INSERT ACTUAL FILE NAME HERE.
-                                           #
+      #
       TEMP_FILE=$THIS_DIR/$THIS_FILE"_temp.txt"
       #
       # Set $VERSION according as it is set in the beginning of $THIS_FILE.
@@ -526,75 +355,787 @@ f_display_common () {
       #
 } # End of function f_display_common.
 #
-# +------------------------------+
-# |  Function f_msg_txt_file_ok  |
-# +------------------------------+
-#
-#     Rev: 2020-04-22
-#  Inputs: $1 - "text", "dialog" or "whiptail" The CLI GUI application in use.
-#          $2 - "OK"  [OK] button at end of text.
-#               "NOK" No [OK] button or "Press Enter key to continue"
-#               at end of text but pause n seconds
-#               to allow reader to read text by using sleep n command.
-#          $3 - Title.
-#          $4 - Text string or text file. 
-#    Uses: None.
-# Outputs: ERROR. 
-#
-f_msg_txt_file_ok () {
-      #
-      # If $2 is "OK" then use command "less".
-      #
-      clear  # Blank the screen.
-      #
-      # Display text file contents.
-      less -P '%P\% (Spacebar, PgUp/PgDn, Up/Dn arrows, press q to quit)' $4
-      #
-      clear  # Blank the screen.
-      #
-} # End of function f_msg_txt_file_ok
-#
 # +----------------------------------------+
-# |            Start Main Program          |
+# |        Function f_check_version        |
 # +----------------------------------------+
 #
-#   Usage: bash file_rename.sh <TARGET DIRECTORY>
-#          bash file_rename.sh /home/user/Documents
+#     Rev: 2021-03-25
+#  Inputs: $1 - UI "dialog" or "whiptail" or "text".
+#          $2 - [OPTIONAL] File name to compare.
+#          FILE_TO_COMPARE.
+#    Uses: SERVER_DIR, MP_DIR, TARGET_DIR, TARGET_FILE, VERSION, TEMP_FILE, ERROR.
+# Outputs: ERROR.
 #
-#  Inputs: $1=TARGET_DIR
+# Summary: Check the version of a single, local file or script,
+#          FILE_TO_COMPARE with the version of repository file.
+#          If the repository file has latest version, then copy all 
+#          dependent files and libraries from the repository to local PC.
+#
+# TO DO enhancement: If local (LAN) repository is unavailable, then
+#          connect to repository on the web if available.
+#
+# Dependencies: f_version_compare.
+#
+f_check_version () {
+      #
+      #
+      #=================================================================
+      # EDIT THE LINES BELOW TO DEFINE THE LAN FILE SERVER DIRECTORY,
+      # LOCAL MOUNTPOINT DIRECTORY, LOCAL REPOSITORY DIRECTORY AND
+      # FILE TO COMPARE BETWEEN THE LOCAL PC AND (LAN) LOCAL REPOSITORY.
+      #=================================================================
+      #
+      #
+      # LAN File Server shared directory.
+      # SERVER_DIR="[FILE_SERVER_DIRECTORY_NAME_GOES_HERE]"
+        SERVER_DIR="///file_server/public"
+      #
+      # Local PC mount-point directory.
+      # MP_DIR="[LOCAL_MOUNT-POINT_DIRECTORY_NAME_GOES_HERE]"
+        MP_DIR="/mnt//file_server/public"
+      #
+      # Local PC mount-point with LAN File Server Local Repository full directory path.
+      # Example: 
+      #                   File server shared directory is "//file_server/public".
+      # Repository directory under the shared directory is "scripts/BASH/Repository".
+      #                 Local PC Mount-point directory is "/mnt/file_server/public".
+      #
+      # Local PC mount-point with LAN File Server Local Repository full directory path.
+      # LOCAL_REPO_DIR="$MP_DIR/[DIRECTORY_PATH_TO_LOCAL_REPOSITORY]"
+        LOCAL_REPO_DIR="$MP_DIR/scripts/BASH/Repository"
+      #
+      # Local PC file to be compared.
+      if [ $# -eq 2 ] ; then
+         # There are 2 arguments that have been passed to this function.
+         # $2 contains the file name to compare.
+         FILE_TO_COMPARE=$2
+      else
+         # $2 is null, so specify file name.
+         if [ -z "$FILE_TO_COMPARE" ] ; then
+            # FILE_TO_COMPARE is undefined so specify file name.
+            FILE_TO_COMPARE=$(basename $0)
+         fi
+      fi
+      #
+      # Version of Local PC file to be compared.
+      VERSION=$(grep --max-count=1 "VERSION" $FILE_TO_COMPARE)
+      #
+      FILE_LIST=$THIS_DIR/$THIS_FILE"_file_temp.txt"
+      ERROR=0
+      #
+      #
+      #=================================================================
+      # EDIT THE LINES BELOW TO SPECIFY THE FILE NAMES TO UPDATE.
+      # FILE NAMES INCLUDE ALL DEPENDENT SCRIPTS AND LIBRARIES.
+      #=================================================================
+      #
+      #
+      # Create list of files to update and write to temporary file, FILE_LIST.
+      #
+      echo "file_rename.sh"            > $FILE_LIST  # <<<--- INSERT ACTUAL FILE NAME HERE.
+      echo "common_bash_function.lib" >> $FILE_LIST  # <<<--- INSERT ACTUAL FILE NAME HERE.
+      #
+      f_version_compare $1 $SERVER_DIR $MP_DIR $LOCAL_REPO_DIR $FILE_TO_COMPARE "$VERSION" $FILE_LIST
+      #
+      if [ -r  $FILE_LIST ] ; then
+         rm  $FILE_LIST
+      fi
+      #
+}  # End of function f_check_version_TEMPLATE.
+#
+# +----------------------------------------+
+# |          Function f_menu_main          |
+# +----------------------------------------+
+#
+#     Rev: 2021-03-07
+#  Inputs: $1 - "text", "dialog" or "whiptail" the preferred user-interface.
+#    Uses: ARRAY_FILE, GENERATED_FILE, MENU_TITLE.
+# Outputs: None.
+#
+# Summary: Display Main-Menu.
+#          This Main Menu function checks its script for the Main Menu
+#          options delimited by "#@@" and if it does not find any, then
+#          it it defaults to the specified library script.
+#
+# Dependencies: f_menu_arrays, f_create_show_menu.
+#
+f_menu_main () { # Create and display the Main Menu.
+      #
+      GENERATED_FILE=$THIS_DIR/$THIS_FILE"_menu_main_generated.lib"
+      #
+      # Does this file have menu items in the comment lines starting with "#@@"?
+      grep --silent ^\#@@ $THIS_DIR/$THIS_FILE
+      ERROR=$?
+      # exit code 0 - menu items in this file.
+      #           1 - no menu items in this file.
+      #               file name of file containing menu items must be specified.
+      if [ $ERROR -eq 0 ] ; then
+         # Extract menu items from this file and insert them into the Generated file.
+         # This is required because f_menu_arrays cannot read this file directly without
+         # going into an infinite loop.
+         grep ^\#@@ $THIS_DIR/$THIS_FILE >$GENERATED_FILE
+         #
+         # Specify file name with menu item data.
+         ARRAY_FILE="$GENERATED_FILE"
+      else
+         #
+         #
+         #================================================================================
+         # EDIT THE LINE BELOW TO DEFINE $ARRAY_FILE AS THE ACTUAL FILE NAME (LIBRARY)
+         # WHERE THE MENU ITEM DATA IS LOCATED. THE LINES OF DATA ARE PREFIXED BY "#@@".
+         #================================================================================
+         #
+         #
+         # Specify library file name with menu item data.
+         # ARRAY_FILE="[FILENAME_GOES_HERE]"
+           ARRAY_FILE="$THIS_DIR/dummy_file_name.lib"
+      fi
+      #
+      # Create arrays from data.
+      f_menu_arrays $ARRAY_FILE
+      #
+      # Calculate longest line length to find maximum menu width
+      # for Dialog or Whiptail using lengths calculated by f_menu_arrays.
+      let MAX_LENGTH=$MAX_CHOICE_LENGTH+$MAX_SUMMARY_LENGTH
+      #
+      # Create generated menu script from array data.
+      #
+      # Note: ***If Menu title contains spaces,
+      #       ***the size of the menu window will be too narrow.
+      #
+      # Menu title MUST use underscores instead of spaces.
+      MENU_TITLE="File_Name_Menu"
+      TEMP_FILE=$THIS_DIR/$THIS_FILE"_menu_main_temp.txt"
+      #
+      f_create_show_menu $1 $GENERATED_FILE $MENU_TITLE $MAX_LENGTH $MAX_LINES $MAX_CHOICE_LENGTH $TEMP_FILE
+      #
+      if [ -r $GENERATED_FILE ] ; then
+         rm $GENERATED_FILE
+      fi
+      #
+      if [ -r $TEMP_FILE ] ; then
+         rm $TEMP_FILE
+      fi
+      #
+} # End of function f_menu_main.
+#
+# +----------------------------------------+
+# |  Function fdl_dwnld_file_from_web_site |
+# +----------------------------------------+
+#
+#     Rev: 2021-03-08
+#  Inputs: $1=GitHub Repository
+#          $2=file name to download.
 #    Uses: None.
 # Outputs: None.
 #
-clear  # Blank the screen.
+# Summary: Download a list of file names from a web site.
+#          Cannot be dependent on "common_bash_function.lib" as this library
+#          may not yet be available and may need to be downloaded.
 #
-echo "Running script $THIS_FILE"
-echo "***   Rev. $VERSION   ***"
-echo
-sleep 1  # pause for 1 second automatically.
+# Dependencies: wget.
 #
-clear # Blank the screen.
 #
-# Set THIS_DIR, SCRIPT_PATH to directory path of script.
-f_script_path
+fdl_dwnld_file_from_web_site () {
+      #
+      # $1 ends with a slash "/" so can append $2 immediately after $1.
+      echo
+      echo ">>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<"
+      echo ">>> Download file from Web Repository <<<"
+      echo ">>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<"
+      echo
+      wget --show-progress $1$2
+      ERROR=$?
+      if [ $ERROR -ne 0 ] ; then
+            echo
+            echo ">>>>>>>>>>>>>><<<<<<<<<<<<<<"
+            echo ">>> wget download failed <<<"
+            echo ">>>>>>>>>>>>>><<<<<<<<<<<<<<"
+            echo
+            echo "Error copying from Web Repository file: \"$2.\""
+            echo
+      else
+         # Make file executable (useable).
+         chmod +x $2
+         #
+         if [ -x $2 ] ; then
+            # File is good.
+            ERROR=0
+         else
+            echo
+            echo ">>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<"
+            echo ">>> File Error after download from Web Repository <<<"
+            echo ">>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<"
+            echo
+            echo "$2 is missing or file is not executable."
+            echo
+         fi
+      fi
+      #
+      # Make downloaded file executable.
+      chmod 755 $2
+      #
+} # End of function fdl_dwnld_file_from_web_site.
+#
+# +-----------------------------------------------+
+# | Function fdl_dwnld_file_from_local_repository |
+# +-----------------------------------------------+
+#
+#     Rev: 2021-03-08
+#  Inputs: $1=Local Repository Directory.
+#          $2=File to download.
+#    Uses: TEMP_FILE.
+# Outputs: ERROR.
+#
+# Summary: Copy a file from the local repository on the LAN file server.
+#          Cannot be dependent on "common_bash_function.lib" as this library
+#          may not yet be available and may need to be downloaded.
+#
+# Dependencies: None.
+#
+fdl_dwnld_file_from_local_repository () {
+      #
+      echo
+      echo ">>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<"
+      echo ">>> File Copy from Local Repository <<<"
+      echo ">>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<"
+      echo
+      eval cp -p $1/$2 .
+      ERROR=$?
+      #
+      if [ $ERROR -ne 0 ] ; then
+         echo
+         echo ">>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<"
+         echo ">>> File Copy Error from Local Repository <<<"
+         echo ">>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<"
+         echo
+         echo -e "Error copying from Local Repository file: \"$2.\""
+         echo
+         ERROR=1
+      else
+         # Make file executable (useable).
+         chmod +x $2
+         #
+         if [ -x $2 ] ; then
+            # File is good.
+            ERROR=0
+         else
+            echo
+            echo ">>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<"
+            echo ">>> File Error after copy from Local Repository <<<"
+            echo ">>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<"
+            echo
+            echo -e "File \"$2\" is missing or file is not executable."
+            echo
+            ERROR=1
+         fi
+      fi
+      #
+      if [ $ERROR -eq 0 ] ; then
+         echo
+         echo -e "Successful Update of file \"$2\" to latest version.\n\nScript must be re-started to use the latest version."
+         echo "____________________________________________________"
+      fi
+      #
+} # End of function fdl_dwnld_file_from_local_repository.
+#
+# +-------------------------------------+
+# |       Function fdl_mount_local      |
+# +-------------------------------------+
+#
+#     Rev: 2021-03-10
+#  Inputs: $1=Server Directory.
+#          $2=Local Mount Point Directory
+#          TEMP_FILE
+#    Uses: TARGET_DIR, UPDATE_FILE, ERROR, SMBUSER, PASSWORD.
+# Outputs: ERROR.
+#
+# Summary: Mount directory using Samba and CIFS and echo error message.
+#          Cannot be dependent on "common_bash_function.lib" as this library
+#          may not yet be available and may need to be downloaded.
+#
+# Dependencies: Software package "cifs-utils" in the Distro's Repository.
+#
+fdl_mount_local () {
+      #
+      # Mount local repository on mount-point.
+      # Write any error messages to file $TEMP_FILE. Get status of mountpoint, mounted?.
+      mountpoint $2 >/dev/null 2>$TEMP_FILE
+      ERROR=$?
+      if [ $ERROR -ne 0 ] ; then
+         # Mount directory.
+         # Cannot use any user prompted read answers if this function is in a loop where file is a loop input.
+         # The read statements will be treated as the next null parameters in the loop without user input.
+         # To solve this problem, specify input from /dev/tty "the keyboard".
+         #
+         echo
+         read -p "Enter user name: " SMBUSER < /dev/tty
+         echo
+         read -s -p "Enter Password: " PASSWORD < /dev/tty
+         echo sudo mount -t cifs $1 $2
+         sudo mount -t cifs -o username="$SMBUSER" -o password="$PASSWORD" $1 $2
+         #
+         # Write any error messages to file $TEMP_FILE. Get status of mountpoint, mounted?.
+         mountpoint $2 >/dev/null 2>$TEMP_FILE
+         ERROR=$?
+         #
+         if [ $ERROR -ne 0 ] ; then
+            echo
+            echo ">>>>>>>>>><<<<<<<<<<<"
+            echo ">>> Mount failure <<<"
+            echo ">>>>>>>>>><<<<<<<<<<<"
+            echo
+            echo -e "Directory mount-point \"$2\" is not mounted."
+            echo
+            echo -e "Mount using Samba failed. Are \"samba\" and \"cifs-utils\" installed?"
+            echo "------------------------------------------------------------------------"
+            echo
+         fi
+         unset SMBUSER PASSWORD
+      fi
+      #
+} # End of function fdl_mount_local.
+#
+# +------------------------------------+
+# |        Function fdl_source         |
+# +------------------------------------+
+#
+#     Rev: 2021-03-25
+#  Inputs: $1=File name to source.
+# Outputs: ERROR.
+#
+# Summary: Source the provided library file and echo error message.
+#          Cannot be dependent on "common_bash_function.lib" as this library
+#          may not yet be available and may need to be downloaded.
+#
+# Dependencies: None.
+#
+fdl_source () {
+      #
+      # Initialize ERROR.
+      ERROR=0
+      #
+      if [ -x "$1" ] ; then
+         # If $1 is a library, then source it.
+         case $1 in
+              *.lib)
+                 source $1
+                 ERROR=$?
+                 #
+                 if [ $ERROR -ne 0 ] ; then
+                    echo
+                    echo ">>>>>>>>>><<<<<<<<<<<"
+                    echo ">>> Library Error <<<"
+                    echo ">>>>>>>>>><<<<<<<<<<<"
+                    echo
+                    echo -e "$1 cannot be sourced using command:\n\"source $1\""
+                    echo
+                 fi
+              ;;
+         esac
+         #
+      fi
+      #
+} # End of function fdl_source.
+#
+# +----------------------------------------+
+# |  Function fdl_download_missing_scripts |
+# +----------------------------------------+
+#
+#     Rev: 2021-03-11
+#  Inputs: $1 - File containing a list of all file dependencies.
+#          $2 - File name of generated list of missing file dependencies.
+# Outputs: ANS.
+#
+# Summary: This function can be used when script is first run.
+#          It verifies that all dependencies are satisfied. 
+#          If any are missing, then any missing required dependencies of
+#          scripts and libraries are downloaded from a LAN repository or
+#          from a repository on the Internet.
+#
+#          This function allows this single script to be copied to any
+#          directory and then when it is executed or run, it will download
+#          automatically all other needed files and libraries, set them to be
+#          executable, and source the required libraries.
+#          
+#          Cannot be dependent on "common_bash_function.lib" as this library
+#          may not yet be available and may need to be downloaded.
+#
+# Dependencies: None.
+#
+fdl_download_missing_scripts () {
+      #
+      # Delete any existing temp file.
+      if [ -r  $2 ] ; then
+         rm  $2
+      fi
+      #
+      # ****************************************************
+      # Create new list of files that need to be downloaded.
+      # ****************************************************
+      #
+      # While-loop will read the file names listed in FILE_LIST (list of
+      # script and library files) and detect which are missing and need 
+      # to be downloaded and then put those file names in FILE_DL_LIST.
+      #
+      while read LINE
+            do
+               FILE=$(echo $LINE | awk -F "^" '{ print $1 }')
+               if [ ! -x $FILE ] ; then
+                  # File needs to be downloaded or is not executable.
+                  # Write any error messages to file $TEMP_FILE.
+                  chmod +x $FILE 2>$TEMP_FILE
+                  ERROR=$?
+                  #
+                  if [ $ERROR -ne 0 ] ; then
+                     # File needs to be downloaded. Add file name to a file list in a text file.
+                     # Build list of files to download.
+                     echo $LINE >> $2
+                  fi
+               fi
+            done < $1
+      #
+      # If there are files to download (listed in FILE_DL_LIST), then mount local repository.
+      if [ -s "$2" ] ; then
+         echo
+         echo "There are missing file dependencies which must be downloaded from"
+         echo "the local repository or web repository."
+         echo
+         echo "Missing files:"
+         while read LINE
+               do
+                  echo $LINE | awk -F "^" '{ print $1 }'
+               done < $2
+         echo
+         echo "You will need to present credentials."
+         echo
+         echo -n "Press '"Enter"' key to continue." ; read X ; unset X
+         #
+         #----------------------------------------------------------------------------------------------
+         # From list of files to download created above $FILE_DL_LIST, download the files one at a time.
+         #----------------------------------------------------------------------------------------------
+         #
+         while read LINE
+               do
+                  # Get Download Source for each file.
+                  DL_FILE=$(echo $LINE | awk -F "^" '{ print $1 }')
+                  DL_SOURCE=$(echo $LINE | awk -F "^" '{ print $2 }')
+                  TARGET_DIR=$(echo $LINE | awk -F "^" '{ print $3 }')
+                  DL_REPOSITORY=$(echo $LINE | awk -F "^" '{ print $4 }')
+                  #
+                  # Initialize Error Flag.
+                  ERROR=0
+                  #
+                  # If a file only found in the Local Repository has source changed
+                  # to "Web" because LAN connectivity has failed, then do not download.
+                  if [ -z DL_REPOSITORY ] && [ $DL_SOURCE = "Web" ] ; then
+                     ERROR=1
+                  fi
+                  #
+                  case $DL_SOURCE in
+                       Local)
+                          # Download from Local Repository on LAN File Server.
+                          # Are LAN File Server directories available on Local Mount-point?
+                          fdl_mount_local $SERVER_DIR $MP_DIR
+                          #
+                          if [ $ERROR -ne 0 ] ; then
+                             # Failed to mount LAN File Server directory on Local Mount-point.
+                             # So download from Web Repository.
+                             fdl_dwnld_file_from_web_site $DL_REPOSITORY $DL_FILE
+                          else
+                             # Sucessful mount of LAN File Server directory. 
+                             # Continue with download from Local Repository on LAN File Server.
+                             fdl_dwnld_file_from_local_repository $TARGET_DIR $DL_FILE
+                             #
+                             if [ $ERROR -ne 0 ] ; then
+                                # Failed to download from Local Repository on LAN File Server.
+                                # So download from Web Repository.
+                                fdl_dwnld_file_from_web_site $DL_REPOSITORY $DL_FILE
+                             fi
+                          fi
+                       ;;
+                       Web)
+                          # Download from Web Repository.
+                          fdl_dwnld_file_from_web_site $DL_REPOSITORY $DL_FILE
+                          if [ $ERROR -ne 0 ] ; then
+                             # Failed so mount LAN File Server directory on Local Mount-point.
+                             fdl_mount_local $SERVER_DIR $MP_DIR
+                             #
+                             if [ $ERROR -eq 0 ] ; then
+                                # Successful mount of LAN File Server directory.
+                                # Continue with download from Local Repository on LAN File Server.
+                                fdl_dwnld_file_from_local_repository $TARGET_DIR $DL_FILE
+                             fi
+                          fi
+                       ;;
+                  esac
+               done < $2
+         #
+         if [ $ERROR -ne 0 ] ; then
+            echo
+            echo
+            echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+            echo ">>> Download failed. Cannot continue, exiting program. <<<"
+            echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+            echo
+         else
+            echo
+            echo
+            echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+            echo ">>> Download is good. Re-run required, exiting program. <<<"
+            echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+            echo
+         fi
+         #
+      fi
+      #
+      # Source each library.
+      #
+      while read LINE
+            do
+               FILE=$(echo $LINE | awk -F "^" '{ print $1 }')
+               # Invoke any library files.
+               fdl_source $FILE
+               if [ $ERROR -ne 0 ] ; then
+                  echo
+                  echo ">>>>>>>>>><<<<<<<<<<<"
+                  echo ">>> Library Error <<<"
+                  echo ">>>>>>>>>><<<<<<<<<<<"
+                  echo
+                  echo -e "$1 cannot be sourced using command:\n\"source $1\""
+                  echo
+               fi
+            done < $1
+      if [ $ERROR -ne 0 ] ; then
+         echo
+         echo
+         echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+         echo ">>> Invoking Libraries failed. Cannot continue, exiting program. <<<"
+         echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+         echo
+      fi
+      #
+} # End of function fdl_download_missing_scripts.
+#
+# +----------------------------------------+
+# |          Function f_select_dir         |
+# +----------------------------------------+
+#
+#  Inputs: $1=GUI, THIS_DIR.
+#          $2=String "[City/Town] Directory"
+#          $3=Default parent directory.
+#    Uses: TEMP_FILE, ANS, ERROR, SCRIPT_LIST.
+# Outputs: ANS (List of selected files), ERROR.
+#
+# Summary: Prompt user-entered directory name.
+#
+# Dependencies: f_yn_question, f_message.
+#
+f_select_dir () {
+      #
+      # Get the screen resolution or X-window size.
+      # Get rows (height).
+      YSCREEN=$(stty size | awk '{ print $1 }')
+      # Get columns (width).
+      XSCREEN=$(stty size | awk '{ print $2 }')
+      #
+      # Reset ERROR for while-loop to work.
+      ERROR=0
+      #
+      # Initialize variables.
+      DIR=""
+      ANS=""
+      #
+      # Format string substitute underscores for spaces.
+      DIR_STR=$(echo $2 | tr "_" " ")
+      #
+      case $1 in
+           dialog)
+              while [ "$ERROR" -eq 0 ]
+                    do
+                       # Dialog needs about 6 more lines for the header and [OK] button.
+                       let Y=$YSCREEN-16
+                       # If number of lines exceeds screen/window height then set textbox height.
+                       #
+                       # Dialog needs about 10 more spaces for the right and left window frame.
+                       let X=$XSCREEN-10
+                       #
+                       DIR=$($1 --stdout --title "Use <tab>, <up/down arrows> and <spacebar> to select a $DIR_STR." --backtitle "Please choose a $DIR_STR" --ok-label "Choose $DIR_STR" --cancel-label "Done choosing" --dselect $3 $Y $X)
+                       ERROR=$?
+                       #
+                       if [ "$ERROR" -eq 0 ] && [ -d $DIR ] ; then
+                          f_yn_question $1 "Y" "Confirm $DIR_STR name" "$DIR_STR name: $DIR\n\nIs the $DIR_STR name correct?"
+                          #
+                          if [ "$ANS" -ne 1 ] ; then
+                             # Yes, $DIR_STR name is correct. Note: $DIR includes "Directory Name".
+                             # Output selected Directory Name to $ANS.
+                             ANS=$DIR
+                             #
+                             f_message $1 "NOK" "Directory Entered" "Directory name accepted. Enter next directory name or press \"Exit\" button.\n\n$DIR" 2
+                          fi
+                       fi
+                    done
+              #
+              # Reset ERROR since on exiting WHILE-loop it will always be EXIT=1.
+              ERROR=0
+              #
+           ;;
+           whiptail)
+              # User-input via "inputbox" free-form directory name entry.
+              $1 --title "User-entered $DIR_STR" --cancel-button "Exit" --inputbox "Enter $DIR_STR name:" 8 70 $3 2>$TEMP_FILE
+              ERROR=$?
+              ANS=$(cat $TEMP_FILE)
+              #
+           ;;
+           text)
+              ERROR=0
+              # The user-entered directory name is whatever is after $3 default parent directory.
+              echo "User-entered $DIR_STR name"
+              echo
+              echo -n "Enter $DIR_STR name(s): $3/"
+              read ANS
+              #
+              # String $3 includes a trailing "/".
+              ANS=$3$ANS
+              #
+              if [ -z "$ANS" ] ; then
+                 ERROR=1
+              fi
+           ;;
+      esac
+      #
+      if [ "$ERROR" -eq 1 ] ; then
+         return 1  # Return to Main Menu.
+      fi
+      #
+} # End of function f_select_dir.
+#
+# +----------------------------------------+
+# |          Function f_main_start         |
+# +----------------------------------------+
+#
+#  Inputs: $1=GUI.
+#          THIS_DIR.
+#    Uses: None.
+# Outputs: TARGET_DIR.
+#
+# Summary: Display a banner with start times and send to a log file.
+#
+# Dependencies: None
+#
+f_main_start () {
+	  #
+      f_select_dir $GUI "Select_Directory" $THIS_DIR
+      #
+      # Set TARGET_DIR to the selected directory.
+      TARGET_DIR=$ANS
+      #
+      f_main_action $1 $TARGET_DIR
+      #
+} # End of function f_main_start.
+#
+# +----------------------------------------+
+# |            Function f_banner           |
+# +----------------------------------------+
+#
+#  Inputs: $1=String, LOG_FILE.
+#    Uses: None.
+# Outputs: None.
+#
+# Summary: Display a banner with start times and send to a log file.
+#
+# Dependencies: None
+#
+f_banner () {
+	  #
+      BANNER=$1
+      # Comment out to speed up script execution.
+      #echo | tee -a $LOG_FILE
+      #echo "   $BANNER" | tee -a $LOG_FILE
+      #echo -n "   Start time: " | tee -a $LOG_FILE
+      #date | tee -a $LOG_FILE
+      #
+}
+# End of function f_banner
+#
+# +----------------------------------------+
+# |      Function f_check_command_rename   |
+# +----------------------------------------+
+#
+#  Inputs: $1=GUI.
+#    Uses: ERROR.
+# Outputs: None.
+#
+# Summary: Check if the "rename" command is available.
+#
+# Dependencies: f_message, f_yn_question, f_abort, apt, command.
+#
+f_check_command_rename () {
+	  #
+      # Is command "rename" installed and available?
+      # Use "command -v" to determine if "rename" is installed and available?
+      command -v rename >/dev/null
+      # "&>/dev/null" does not work in Debian distro.
+      # 1=standard messages, 2=error messages, &=both.
+      ERROR=$?
+      #
+      # Is the "rename" command installed and available?
+      if [ $ERROR -ne 0 ] ; then
+         # No, the "rename" command is not installed, so install command "rename".
+         f_yn_question $1 "Y" "The \"Rename\" command is not installed." "Install \"rename\" command?"
+         case $ANS in
+              1)
+                 f_message $1 "OK" "Rename Command Unavailable" "The \"rename\" command was not installed." 0 "Continue" 
+              ;;
+              0)
+                 # "Yes" is the default answer.
+                 f_message $1 "NOK" "Install App" "Installing the \"rename\" command.  Super-user password required." 3 "Continue"
+                 sudo apt-get install rename
+              ;;
+         esac
+      fi
+      # Is command "rename" installed and available?
+      # Use "command -v" to determine if "rename" is installed and available?
+      command -v rename >/dev/null
+      # "&>/dev/null" does not work in Debian distro.
+      # 1=standard messages, 2=error messages, &=both.
+      ERROR=$?
+      #
+      # Is the "rename" command installed and available?
+      if [ $ERROR -ne 0 ] ; then
+         # No, the "rename" command is not installed, so install command "rename".
+         f_message $1 "NOK" "Rename Command Unavailable" "The \"rename\" command was not installed.\nExiting script." 3 "Continue" 
+         f_abort $1
+      fi
+      unset ERROR
+      #
+} # End of function f_check_command_rename
+#
+# +----------------------------------------+
+# |         Function f_main_action         |
+# +----------------------------------------+
+#
+#  Inputs: $1=GUI
+#          $2=TARGET DIRECTORY.
+#    Uses: ERROR.
+# Outputs: None.
+#
+# Summary: Rename files, display progress banner.
+#
+# Dependencies: rename.
+#
+f_main_action () {
 #
 LOG_FILE="file_rename_$(date +%Y-%m-%d-%H%M.%S%N).log"
 #
-# Test for Optional Arguments.
-f_arguments $1 $2  # Also sets variable GUI.
-#
-# Does the Target Directory exist?
-if [ ! -d $1 ] ; then
-   echo $(tput setaf 1) # Set font to color red.
-   echo "Target Directory: $1" |  tee -a $LOG_FILE*
-   echo "  Does not exist." |  tee -a $LOG_FILE*
-   f_abort
-fi
-#
 # Is the command "rename" available?
-f_check_command_rename
+f_check_command_rename $1
+#
+# Blank the screen.
+clear
 #
 # Create date stamp header for log file.
-echo -n "Start time for renaming files in directory $1: " | tee $LOG_FILE
+echo -n "Start time for renaming files in directory $2: " | tee $LOG_FILE
 date  | tee -a $LOG_FILE
 #
 # Compatible file names for most Operating Systems.
@@ -620,136 +1161,136 @@ date  | tee -a $LOG_FILE
 # The order of operations below is important especially for the "find and replace" operations.
 #
 # 1. Replace <colon><space> with <two-dashes> in file name.
-f_banner "33 of 33 Replace <colon><space> with <two-dashes> in $1/file name."
-rename -verbose 's/: /--/g' $1/* |  tee -a $LOG_FILE
+f_banner "33 of 33 Replace <colon><space> with <two-dashes> in $2/file name."
+rename -verbose 's/: /--/g' $2/* |  tee -a $LOG_FILE
 #
 # 2. Replace <colon> with <underscore> in file name.
-f_banner "32 of 33 Replace <colon> with <underscore> in $1/file name."
-rename -verbose 's/:/_/g' $1/* |  tee -a $LOG_FILE
+f_banner "32 of 33 Replace <colon> with <underscore> in $2/file name."
+rename -verbose 's/:/_/g' $2/* |  tee -a $LOG_FILE
 #
 # 3. Replace <space> with <underscore> in file name.
-f_banner "31 of 33 Replace <space> with <underscore> in $1/file name."
-rename -verbose 's/ /_/g' $1/* |  tee -a $LOG_FILE
+f_banner "31 of 33 Replace <space> with <underscore> in $2/file name."
+rename -verbose 's/ /_/g' $2/* |  tee -a $LOG_FILE
 #
 # 4. Replace <double-dash> with <two-dashes> in file name.
-f_banner "30 of 33 Replace <double-dash> with <two-dashes> in $1/file name."
-rename -verbose 's/—/--/g' $1/* |  tee -a $LOG_FILE
+f_banner "30 of 33 Replace <double-dash> with <two-dashes> in $2/file name."
+rename -verbose 's/—/--/g' $2/* |  tee -a $LOG_FILE
 #
 # 5. Remove <exclamation-mark> in file name.
-f_banner "29 of 33 Remove <exclamation-mark> in $1/file name."
-rename -verbose 's/!//g' $1/* |  tee -a $LOG_FILE
+f_banner "29 of 33 Remove <exclamation-mark> in $2/file name."
+rename -verbose 's/!//g' $2/* |  tee -a $LOG_FILE
 #
 # 6. Remove <question-mark> in file name.
-f_banner "28 of 33 Remove <question-mark> in $1/file name."
-rename -verbose 's/\?//g' $1/* |  tee -a $LOG_FILE
+f_banner "28 of 33 Remove <question-mark> in $2/file name."
+rename -verbose 's/\?//g' $2/* |  tee -a $LOG_FILE
 #
 # 7. Remove <percent-sign> in file name.
-f_banner "27 of 33 Remove <percent-sign> in $1/file name."
-rename -verbose 's/%//g' $1/* |  tee -a $LOG_FILE
+f_banner "27 of 33 Remove <percent-sign> in $2/file name."
+rename -verbose 's/%//g' $2/* |  tee -a $LOG_FILE
 #
 # 8. Remove <ampersand> in file name.
-f_banner "26 of 33 Remove <ampersand> in $1/file name."
-rename -verbose 's/\&//g' $1/* |  tee -a $LOG_FILE
+f_banner "26 of 33 Remove <ampersand> in $2/file name."
+rename -verbose 's/\&//g' $2/* |  tee -a $LOG_FILE
 #
 # 9. Remove <single-quote> in file name.
-f_banner "25 of 33 Remove <single-quote> in $1/file name."
-rename "s/\'//g" $1/* |  tee -a $LOG_FILE
+f_banner "25 of 33 Remove <single-quote> in $2/file name."
+rename "s/\'//g" $2/* |  tee -a $LOG_FILE
 #
 # 10. Remove <single-right-quote> in file name.
-f_banner "24 of 33 Remove <single-right-quote> in $1/file name."
-rename -verbose 's/’//g' $1/* |  tee -a $LOG_FILE
+f_banner "24 of 33 Remove <single-right-quote> in $2/file name."
+rename -verbose 's/’//g' $2/* |  tee -a $LOG_FILE
 #
 # 11. Remove <double-quote> in file name.
-f_banner "23 of 33 Remove <double-quote> in $1/file name."
-rename -verbose 's/\"//g' $1/* |  tee -a $LOG_FILE
+f_banner "23 of 33 Remove <double-quote> in $2/file name."
+rename -verbose 's/\"//g' $2/* |  tee -a $LOG_FILE
 #
 # 12. Remove <right-double-quote> in file name.
-f_banner "22 of 33 Remove <right-double-quote> in $1/file name."
-rename -verbose 's/”//g' $1/* |  tee -a $LOG_FILE
+f_banner "22 of 33 Remove <right-double-quote> in $2/file name."
+rename -verbose 's/”//g' $2/* |  tee -a $LOG_FILE
 #
 # 13. Remove <left-double-quote> in file name.
-f_banner "21 of 33 Remove <left-double-quote> in $1/file name."
-rename -verbose 's/“//g' $1/* |  tee -a $LOG_FILE
+f_banner "21 of 33 Remove <left-double-quote> in $2/file name."
+rename -verbose 's/“//g' $2/* |  tee -a $LOG_FILE
 #
 # 14. Replace <underscore-period>  with <period> in file name.
-f_banner "20 of 33 Replace <underscore-period>  with <period> in $1/file name."
-rename -verbose 's/_\././g' $1/* |  tee -a $LOG_FILE
+f_banner "20 of 33 Replace <underscore-period>  with <period> in $2/file name."
+rename -verbose 's/_\././g' $2/* |  tee -a $LOG_FILE
 #
 # 15. Replace <triple-underscore> with <underscore> in file name.
-f_banner "19 of 33 Replace <triple-underscore> with <underscore> in $1/file name."
-rename -verbose 's/___/_/g' $1/* |  tee -a $LOG_FILE
+f_banner "19 of 33 Replace <triple-underscore> with <underscore> in $2/file name."
+rename -verbose 's/___/_/g' $2/* |  tee -a $LOG_FILE
 # 
 # 16. Replace <double-underscore> with <underscore> in file name.
-f_banner "18 of 33 Replace <double-underscore> with <underscore> in $1/file name."
-rename -verbose 's/__/_/g' $1/* |  tee -a $LOG_FILE
+f_banner "18 of 33 Replace <double-underscore> with <underscore> in $2/file name."
+rename -verbose 's/__/_/g' $2/* |  tee -a $LOG_FILE
 #
 # 17. Repeat Replace <double-underscore> with <underscore> in file name.
-f_banner "17 of 33 Repeat Replace <double-underscore> with <underscore> in $1/file name."
-rename -verbose 's/__/_/g' $1/* |  tee -a $LOG_FILE
+f_banner "17 of 33 Repeat Replace <double-underscore> with <underscore> in $2/file name."
+rename -verbose 's/__/_/g' $2/* |  tee -a $LOG_FILE
 #
 # 18. Replace <two-dashes><underscore> with <two-dashes> in file name.
-f_banner "16 of 33 Replace <two-dashes><underscore> with <two-dashes> in $1/file name."
-rename -verbose 's/--_/--/g' $1/* |  tee -a $LOG_FILE
+f_banner "16 of 33 Replace <two-dashes><underscore> with <two-dashes> in $2/file name."
+rename -verbose 's/--_/--/g' $2/* |  tee -a $LOG_FILE
 #
 # 19. Replace <underscore><two-dashes> with <two-dashes> in file name.
-f_banner "15 of 33 Replace <underscore><two-dashes> with <two-dashes> in $1/file name."
-rename -verbose 's/_--/--/g' $1/* |  tee -a $LOG_FILE
+f_banner "15 of 33 Replace <underscore><two-dashes> with <two-dashes> in $2/file name."
+rename -verbose 's/_--/--/g' $2/* |  tee -a $LOG_FILE
 #
 # 20. Remove <right-bracket> in file name.
-f_banner "14 of 33 Remove <right-bracket> in $1/file name."
-rename -verbose 's/\}//g' $1/* |  tee -a $LOG_FILE
+f_banner "14 of 33 Remove <right-bracket> in $2/file name."
+rename -verbose 's/\}//g' $2/* |  tee -a $LOG_FILE
 #
 # 21. Remove <left-bracket> in file name.
-f_banner "13 of 33 Remove <left-bracket> in $1/file name."
-rename -verbose 's/\{//g' $1/* |  tee -a $LOG_FILE
+f_banner "13 of 33 Remove <left-bracket> in $2/file name."
+rename -verbose 's/\{//g' $2/* |  tee -a $LOG_FILE
 #
 # 22. NEVER Remove <forward-slash> in file name. It will change directory of file.
-f_banner "12 of 33 NEVER Remove <forward-slash> in $1/file name."
-#rename -verbose 's/\///g' $1/* |  tee -a $LOG_FILE
+f_banner "12 of 33 NEVER Remove <forward-slash> in $2/file name."
+#rename -verbose 's/\///g' $2/* |  tee -a $LOG_FILE
 #
 # 23. NEVER Remove <back-slash> in file name. It will change directory of file.
-f_banner "11 of 33 NEVER Remove <back-slash> in $1/file name."
-#rename -verbose 's/\\//g' $1/* |  tee -a $LOG_FILE
+f_banner "11 of 33 NEVER Remove <back-slash> in $2/file name."
+#rename -verbose 's/\\//g' $2/* |  tee -a $LOG_FILE
 #
 # 24. Remove <right-angle-bracket> in file name.
-f_banner "10 of 33 Remove <right-angle-bracket> in $1/file name."
-rename -verbose 's/\>//g' $1/* |  tee -a $LOG_FILE
+f_banner "10 of 33 Remove <right-angle-bracket> in $2/file name."
+rename -verbose 's/\>//g' $2/* |  tee -a $LOG_FILE
 #
 # 25. Remove <left-angle-bracket> in file name.
-f_banner "09 of 33 Remove <left-angle-bracket> in $1/file name."
-rename -verbose 's/\<//g' $1/* |  tee -a $LOG_FILE
+f_banner "09 of 33 Remove <left-angle-bracket> in $2/file name."
+rename -verbose 's/\<//g' $2/* |  tee -a $LOG_FILE
 #
 # 26. Remove <asterisk> in file name.
-f_banner "08 of 33 Remove <asterisk> in $1/file name."
-rename -verbose 's/\*//g' $1/* |  tee -a $LOG_FILE
+f_banner "08 of 33 Remove <asterisk> in $2/file name."
+rename -verbose 's/\*//g' $2/* |  tee -a $LOG_FILE
 #
 # 27. Remove <dollar sign> in file name.
-f_banner "07 of 33 Remove <dollar sign> in $1/file name."
-rename -verbose 's/\$//g' $1/* |  tee -a $LOG_FILE
+f_banner "07 of 33 Remove <dollar sign> in $2/file name."
+rename -verbose 's/\$//g' $2/* |  tee -a $LOG_FILE
 #
 # 28. Remove <at sign> in file name.
-f_banner "06 of 33 Remove <at sign> in $1/file name."
-rename -verbose 's/\@//g' $1/* |  tee -a $LOG_FILE
+f_banner "06 of 33 Remove <at sign> in $2/file name."
+rename -verbose 's/\@//g' $2/* |  tee -a $LOG_FILE
 #
 # 29. Remove <pound sign> in file name.
-f_banner "05 of 33 Remove <pound sign> in $1/file name."
-rename -verbose 's/\#//g' $1/* |  tee -a $LOG_FILE
+f_banner "05 of 33 Remove <pound sign> in $2/file name."
+rename -verbose 's/\#//g' $2/* |  tee -a $LOG_FILE
 #
 # 30. Remove <plus sign> in file name.
-f_banner "04 of 33 Remove <plus sign> in $1/file name."
-rename -verbose 's/\+//g' $1/* |  tee -a $LOG_FILE
+f_banner "04 of 33 Remove <plus sign> in $2/file name."
+rename -verbose 's/\+//g' $2/* |  tee -a $LOG_FILE
 #
 # 31. Remove <equal sign> in file name.
-f_banner "03 of 33 Remove <equal sign> in $1/file name."
-rename -verbose 's/\=//g' $1/* |  tee -a $LOG_FILE
+f_banner "03 of 33 Remove <equal sign> in $2/file name."
+rename -verbose 's/\=//g' $2/* |  tee -a $LOG_FILE
 #
 # 32. Remove <pipe sign> in file name.
-f_banner "02 of 33 Remove <pipe sign> in $1/file name."
-rename -verbose 's/\!//g' $1/* |  tee -a $LOG_FILE
+f_banner "02 of 33 Replace <pipe sign> with <underscore> in $2/file name."
+rename -verbose 's/\|/_/g' $2/* |  tee -a $LOG_FILE
 #
 # 33. Remove <back-tick sign> in file name.
-f_banner "01 of 31 Remove <back-tick sign> in $1/file name."
-rename -verbose 's/\`//g' $1/* |  tee -a $LOG_FILE
+f_banner "01 of 31 Remove <back-tick sign> in $2/file name."
+rename -verbose 's/\`//g' $2/* |  tee -a $LOG_FILE
 #
 echo -n "Finish time: " | tee -a $LOG_FILE
 date  | tee -a $LOG_FILE
@@ -760,4 +1301,164 @@ if [ -e $TEMP_FILE ] ; then
    rm $TEMP_FILE
 fi
 #
-# All Dun Dun noodles.
+} # End of function f_main_action
+# 
+#
+# **************************************
+# **************************************
+# ***     Start of Main Program      ***
+# **************************************
+# **************************************
+#     Rev: 2021-04-19
+#
+if [ -e $TEMP_FILE ] ; then
+   rm $TEMP_FILE
+fi
+#
+# Blank the screen.
+clear
+#
+#
+#-------------------------------------------------------
+# Detect and download any missing scripts and libraries.
+#-------------------------------------------------------
+#
+#----------------------------------------------------------------
+# Variables FILE_LIST and FILE_DL_LIST are defined in the section
+# "Default Variable Values" at the beginning of this script.
+#----------------------------------------------------------------
+#
+# Are any files/libraries missing?
+fdl_download_missing_scripts $FILE_LIST $FILE_DL_LIST
+#
+# Are there any problems with the download/copy of missing scripts?
+if [ -r  $FILE_DL_LIST ] || [ $ERROR -ne 0 ] ; then
+   # Yes, there were missing files or download/copy problems so exit program.
+   #
+   # Delete temporary files.
+   if [ -e $TEMP_FILE ] ; then
+      rm $TEMP_FILE
+   fi
+   #
+   if [ -r  $FILE_LIST ] ; then
+      rm  $FILE_LIST
+   fi
+   #
+   if [ -r  $FILE_DL_LIST ] ; then
+      rm  $FILE_DL_LIST
+   fi
+   #
+   exit 0  # This cleanly closes the process generated by #!bin/bash.
+           # Otherwise every time this script is run, another instance of
+           # process /bin/bash is created using up resources.
+fi
+#
+#***************************************************************
+# Process Any Optional Arguments and Set Variables THIS_DIR, GUI
+#***************************************************************
+#
+# Set THIS_DIR, SCRIPT_PATH to directory path of script.
+f_script_path
+#
+# Set Temporary file using $THIS_DIR from f_script_path.
+TEMP_FILE=$THIS_DIR/$THIS_FILE"_temp.txt"
+#
+# If command already specifies GUI, then do not detect GUI.
+# i.e. "bash menu.sh dialog" or "bash menu.sh text".
+if [ -z $GUI ] ; then
+   # Test for GUI (Whiptail or Dialog) or pure text environment.
+   f_detect_ui
+fi
+#
+# Final Check of Environment
+#GUI="whiptail"  # Diagnostic line.
+#GUI="dialog"    # Diagnostic line.
+#GUI="text"      # Diagnostic line.
+#
+# Define Target Directory (This must be before f_arguments).
+TARGET_DIR=""
+#
+# Test for Optional Arguments.
+# Also sets variable GUI.
+f_arguments $1 $2
+#
+# Delete temporary files.
+if [ -r  $FILE_LIST ] ; then
+   rm  $FILE_LIST
+fi
+#
+if [ -r  $FILE_DL_LIST ] ; then
+   rm  $FILE_DL_LIST
+fi
+#
+# Test for X-Windows environment. Cannot run in CLI for LibreOffice.
+# if [ x$DISPLAY = x ] ; then
+#    f_message text "OK" "\Z1\ZbCannot run LibreOffice without an X-Windows environment.\ni.e. LibreOffice must run in a terminal emulator in an X-Window.\Zn"
+# fi
+#
+# Test for BASH environment.
+f_test_environment $1
+#
+# If an error occurs, the f_abort() function will be called.
+# trap 'f_abort' 0
+# set -e
+#
+#***************
+# Run Main Code.
+#***************
+#
+if [ -n "$TARGET_DIR" ] && [ -d "$TARGET_DIR" ] ; then
+   # TARGET_DIR is defined by f_arguments and is passed as a first argument to file_rename.sh.
+   # If no argument is passed, then the default TARGET_DIR is the current directory of this script.
+   f_main_action $GUI "$TARGET_DIR"
+else
+   #
+   # Blank the screen.
+   clear
+   #
+   echo "Running script $THIS_FILE"
+   echo "***   Rev. $VERSION   ***"
+   echo
+   # pause for 1 second automatically.
+   sleep 1
+   #
+   # Blank the screen.
+   clear
+   #
+   #********************************
+   # Show Brief Description message.
+   #********************************
+   #
+   # Only display Brief Description if no Target Directory was pre-specified.
+   # This will prevent script file_recursive_rename.sh from displaying it
+   # every time a different sub-directory is processed.
+   #
+   f_about $GUI "NOK" 1
+   #
+   # Display Main Menu.
+   f_menu_main $GUI
+fi
+#
+# Delete temporary files.
+#
+if [ -e $TEMP_FILE ] ; then
+   rm $TEMP_FILE
+fi
+#
+if [ -e  $FILE_LIST ] ; then
+   rm  $FILE_LIST
+fi
+#
+if [ -e  $FILE_DL_LIST ] ; then
+   rm  $FILE_DL_LIST
+fi
+#
+# Nicer ending especially if you chose custom colors for this script.
+# Blank the screen.
+clear
+#
+exit 0  # This cleanly closes the process generated by #!bin/bash.
+        # Otherwise every time this script is run, another instance of
+        # process /bin/bash is created using up resources.
+        #
+# All dun dun noodles.
