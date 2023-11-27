@@ -48,7 +48,7 @@
 # |        Default Variable Values         |
 # +----------------------------------------+
 #
-VERSION="2022-06-15 22:40"
+VERSION="2023-05-04 17:32"
 THIS_FILE=$(basename $0)
 TEMP_FILE=$THIS_FILE"_temp.txt"
 #
@@ -98,7 +98,7 @@ TEMP_FILE=$THIS_FILE"_temp.txt"
 FILE_LIST=$THIS_FILE"_file_temp.txt"
 #
 # Format: [File Name]^[Local/Web]^[Local repository directory]^[web repository directory]
-echo "common_bash_function.lib^Local^/mnt/scotty/files/LIBRARY/PC-stuff/PC-software/BASH_Scripting_Projects/Repository^https://raw.githubusercontent.com/rdchin/file-rename/master/"   >> $FILE_LIST
+echo "common_bash_function.lib^Local^/mnt/scotty/files/LIBRARY/PC-stuff/PC-software/BASH_Scripting_Projects/Repository^https://raw.githubusercontent.com/rdchin/BASH_function_library/master/"   >> $FILE_LIST
 #
 # Create a name for a temporary file which will have a list of files which need to be downloaded.
 FILE_DL_LIST=$THIS_FILE"_file_dl_temp.txt"
@@ -208,9 +208,6 @@ FILE_DL_LIST=$THIS_FILE"_file_dl_temp.txt"
 ## (After each edit made, please update Code History and VERSION.)
 ##
 ## CODE HISTORY
-##
-## 2022-12-25 *Section "Default Variable Values" corrected the GitHub
-##             Repository name.
 ##
 ## 2022-04-28 *f_view_logs, f_select_log_file_checklist,
 ##             f_select_log_file_fselect, f_select_log_file_radiolist added
