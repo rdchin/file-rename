@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# ©2023 Copyright 2023 Robert D. Chin
+# ©2024 Copyright 2024 Robert D. Chin
 # Email: RDevChin@Gmail.com
 #
 #   Usage: bash file_recursive_rename.sh <TARGET DIRECTORY>
@@ -48,7 +48,7 @@
 # |        Default Variable Values         |
 # +----------------------------------------+
 #
-VERSION="2023-05-04 17:32"
+VERSION="2024-01-20 22:30"
 THIS_FILE="file_recursive_rename.sh"
 REQUIRED_FILE="file_rename.sh"
 #
@@ -206,6 +206,8 @@ FILE_DL_LIST=$THIS_FILE"_file_dl_temp.txt"
 ## (After each edit made, please update Code History and VERSION.)
 ##
 ## CODE HISTORY
+##
+## 2024-01-20 *Update copyright 2024.
 ##
 ## 2023-05-04 *f_main_action commented out the interactive question to
 ##             delete the temporary log files for each directory in favor

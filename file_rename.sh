@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# ©2023 Copyright 2023 Robert D. Chin
+# ©2024 Copyright 2024 Robert D. Chin
 # Email: RDevChin@Gmail.com
 #
 #   Usage: bash file_rename.sh <TARGET DIRECTORY>
@@ -48,7 +48,7 @@
 # |        Default Variable Values         |
 # +----------------------------------------+
 #
-VERSION="2023-05-04 17:32"
+VERSION="2024-01-20 22:30"
 THIS_FILE=$(basename $0)
 TEMP_FILE=$THIS_FILE"_temp.txt"
 #
@@ -208,6 +208,8 @@ FILE_DL_LIST=$THIS_FILE"_file_dl_temp.txt"
 ## (After each edit made, please update Code History and VERSION.)
 ##
 ## CODE HISTORY
+##
+## 2024-01-20 *Update copyright 2024.
 ##
 ## 2022-04-28 *f_view_logs, f_select_log_file_checklist,
 ##             f_select_log_file_fselect, f_select_log_file_radiolist added
