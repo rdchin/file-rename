@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# ©2024 Copyright 2024 Robert D. Chin
+# ©2025 Copyright 2025 Robert D. Chin
 # Email: RDevChin@Gmail.com
 #
 #   Usage: bash file_rename.sh <TARGET DIRECTORY>
@@ -21,34 +21,11 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
-# +--------------------------------------------------------------------------+
-# |                                                                          |
-# |                 Customize Menu choice options below.                     |
-# |                                                                          |
-# +--------------------------------------------------------------------------+
-#
-#  Format: <#@@> <Menu Option> <#@@> <Description of Menu Option> <#@@> <Corresponding function or action or cammand>
-# WARNING: Text strings cannot include apostrophes (').
-#
-#@@Exit#@@Exit this menu.#@@break
-#
-#@@Rename Files#@@Rename files to standards.#@@f_main_start^$GUI
-#
-#@@View Log Files#@@View the log file.#@@f_view_logs^$GUI
-#
-#@@About#@@Version information of this script.#@@f_about^$GUI
-#
-#@@Code History#@@Display code change history of this script.#@@f_code_history^$GUI
-#
-#@@Version Update#@@Check for updates to this script and download.#@@f_check_version^$GUI
-#
-#@@Help#@@Display help message.#@@f_help_message^$GUI
-#
 # +----------------------------------------+
 # |        Default Variable Values         |
 # +----------------------------------------+
 #
-VERSION="2024-01-20 22:30"
+VERSION="2025-06-14 18:03"
 THIS_FILE=$(basename $0)
 TEMP_FILE=$THIS_FILE"_temp.txt"
 #
@@ -209,6 +186,19 @@ FILE_DL_LIST=$THIS_FILE"_file_dl_temp.txt"
 ##
 ## CODE HISTORY
 ##
+## 2025-06-13 *f_main_start changed f_select_dir arguments to select
+##             only a single directory.
+##
+## 2025-06-12 *Updated to latest standards.
+##            *f_main_action deleted f_check_command_rename.
+##            *f_quick_start, f_main_start added f_check_command_rename.
+##
+## 2024-06-19 *f_main_action added removing of semi-colons and corrected
+##             comments and user-messages.
+##
+## 2024-04-28 *f_quick_start added to skip directories where file names
+##             do not contain any spaces.
+##
 ## 2024-01-20 *Update copyright 2024.
 ##
 ## 2022-04-28 *f_view_logs, f_select_log_file_checklist,
@@ -322,22 +312,55 @@ FILE_DL_LIST=$THIS_FILE"_file_dl_temp.txt"
 ##
 ## 2016-07-20 *Initial release.
 #
+# +--------------------------------------------------------------------------+
+# |                                                                          |
+# |                 Customize Menu choice options below.                     |
+# |                                                                          |
+# +--------------------------------------------------------------------------+
+#
+#  Format: <#@@> <Menu Option> <#@@> <Description of Menu Option> <#@@> <Corresponding function or action or cammand>
+# WARNING: Text strings cannot include apostrophes (').
+#
+#@@Exit#@@Exit this menu.#@@break
+#
+#@@Quick Rename Files#@@Skip directories if filenames have no spaces.#@@f_quick_start^$GUI
+#
+#@@Thorough Rename Files#@@Rename files to standards.#@@f_main_start^$GUI
+#
+#@@View Log Files#@@View the log file.#@@f_view_logs^$GUI
+#
+#@@About#@@Version information of this script.#@@f_about^$GUI
+#
+#@@Code History#@@Display code change history of this script.#@@f_code_history^$GUI
+#
+#@@Version Update#@@Check for updates to this script and download.#@@f_check_version^$GUI
+#
+#@@Help#@@Display help message.#@@f_help_message^$GUI
+#
 # +------------------------------------+
 # |     Function f_display_common      |
 # +------------------------------------+
 #
-#     Rev: 2021-03-31
-#  Inputs: $1=UI - "text", "dialog" or "whiptail" the preferred user-interface.
-#          $2=Delimiter of text to be displayed.
-#          $3="NOK", "OK", or null [OPTIONAL] to control display of "OK" button.
-#          $4=Pause $4 seconds [OPTIONAL]. If "NOK" then pause to allow text to be read.
+#     Rev: 2024-02-24
+#  Inputs: $1 - "text", "dialog" or "whiptail" the command-line user-interface in use.
+#          $2 - Delimiter of text to be displayed.
+#          $3 - [OPTIONAL] to control display of prompt to continue.
+#                          null (Default) - "OK" button or text prompt, display until either Enter key or "OK" button is pressed.
+#                          "OK"           - "OK" button or text prompt, display until either Enter key or "OK" button is pressed.
+#                          "NOK"          - No "OK" button or text prompt, display for $3 seconds before continuing automatically.
+#          $4 - [OPTIONAL] to control pause duration. Only used if $3="NOK".
+#                          $4 seconds pause to allow text to be read before continuing automatically.
 #          THIS_DIR, THIS_FILE, VERSION.
 #    Uses: X.
 # Outputs: None.
 #
-# Synopsis: Display lines of text beginning with a given comment delimiter.
+# Summary: Display lines of text beginning with a given comment delimiter.
 #
 # Dependencies: f_message.
+#
+# PLEASE NOTE: RENAME THIS FUNCTION WITHOUT SUFFIX "_TEMPLATE" AND COPY
+#              THIS FUNCTION INTO ANY SCRIPT WHICH DEPENDS ON THE
+#              LIBRARY FILE "common_bash_function.lib".
 #
 f_display_common () {
       #
@@ -375,7 +398,7 @@ f_display_common () {
       # Display text (all lines beginning ("^") with $2 but do not print $2).
       # sed substitutes null for $2 at the beginning of each line
       # so it is not printed.
-      sed -n "s/$2//"p $THIS_DIR/$THIS_FILE >> $TEMP_FILE
+      sed --silent "s/$2//p" $THIS_DIR/$THIS_FILE >> $TEMP_FILE
       #
       case $3 in
            "NOK" | "nok")
@@ -392,11 +415,15 @@ f_display_common () {
 # |        Function f_check_version        |
 # +----------------------------------------+
 #
-#     Rev: 2021-03-25
-#  Inputs: $1 - UI "dialog" or "whiptail" or "text".
+#     Rev: 2024-02-22
+#  Inputs: $1 - "text", "dialog" or "whiptail" the command-line user-interface in use.
 #          $2 - [OPTIONAL] File name to compare.
+#          $3 - [OPTIONAL] to control display of messages and interactive user questions.
+#                          null (default) - Display error and status messages and interactive user questions.
+#                          1              - Display error messages only (Silent mode).
 #          FILE_TO_COMPARE.
-#    Uses: SERVER_DIR, MP_DIR, TARGET_DIR, TARGET_FILE, VERSION, TEMP_FILE, ERROR.
+#    Uses: SERVER_DIR, MP_DIR, LOCAL_REPO_DIR, $FILE_TO_COMPARE, FILE_LIST,
+#          VERSION, TEMP_FILE, ERROR.
 # Outputs: ERROR.
 #
 # Summary: Check the version of a single, local file or script,
@@ -408,6 +435,10 @@ f_display_common () {
 #          connect to repository on the web if available.
 #
 # Dependencies: f_version_compare.
+#
+# PLEASE NOTE: RENAME THIS FUNCTION WITHOUT SUFFIX "_TEMPLATE" AND COPY
+#              THIS FUNCTION INTO ANY SCRIPT WHICH DEPENDS ON THE
+#              LIBRARY FILE "common_bash_function.lib".
 #
 f_check_version () {
       #
@@ -421,11 +452,15 @@ f_check_version () {
       #
       # LAN File Server shared directory.
       # SERVER_DIR="[FILE_SERVER_DIRECTORY_NAME_GOES_HERE]"
-        SERVER_DIR="//scotty/files"
+      if [ -z "$SERVER_DIR" ] ; then
+         SERVER_DIR="//scotty/files"
+      fi
       #
       # Local PC mount-point directory.
       # MP_DIR="[LOCAL_MOUNT-POINT_DIRECTORY_NAME_GOES_HERE]"
-        MP_DIR="/mnt/scotty/files"
+      if [ -z "$MP_DIR" ] ; then
+         MP_DIR="/mnt/scotty/files"
+      fi
       #
       # Local PC mount-point with LAN File Server Local Repository full directory path.
       # Example:
@@ -435,7 +470,9 @@ f_check_version () {
       #
       # Local PC mount-point with LAN File Server Local Repository full directory path.
       # LOCAL_REPO_DIR="$MP_DIR/[DIRECTORY_PATH_TO_LOCAL_REPOSITORY]"
+      if [ -z "$LOCAL_REPO_DIR" ] ; then
         LOCAL_REPO_DIR="$MP_DIR/LIBRARY/PC-stuff/PC-software/BASH_Scripting_Projects/Repository"
+      fi
       #
       # Local PC file to be compared.
       if [ $# -eq 2 ] ; then
@@ -453,8 +490,18 @@ f_check_version () {
       # Version of Local PC file to be compared.
       VERSION=$(grep --max-count=1 "VERSION" $FILE_TO_COMPARE)
       #
+      # Initialize variables.
       FILE_LIST=$THIS_DIR/$THIS_FILE"_file_temp.txt"
       ERROR=0
+      #
+      # Delete any existing file.
+      # This assures that FILE_LIST is not appended to but is newly created
+      # in the code below. Added because typo may occur when using redirection
+      # where typo ">>" is used instead of ">" at FILE NAME1.
+      # i.e. typo at echo "[ FILE NAME1 GOES HERE ]"  >> $FILE_LIST
+      if [ -e $FILE_LIST ] ; then
+         rm $FILE_LIST
+      fi
       #
       #
       #=================================================================
@@ -468,11 +515,13 @@ f_check_version () {
       echo "file_rename.sh"            > $FILE_LIST  # <<<--- INSERT ACTUAL FILE NAME HERE.
       echo "common_bash_function.lib" >> $FILE_LIST  # <<<--- INSERT ACTUAL FILE NAME HERE.
       #
-      f_version_compare $1 $SERVER_DIR $MP_DIR $LOCAL_REPO_DIR $FILE_TO_COMPARE "$VERSION" $FILE_LIST
+      f_version_compare $1 "$SERVER_DIR" "$MP_DIR" "$LOCAL_REPO_DIR" "$FILE_TO_COMPARE" "$VERSION" "$FILE_LIST" "$3"
       #
-      if [ -r  $FILE_LIST ] ; then
+      if [ -r $FILE_LIST ] ; then
          rm  $FILE_LIST
       fi
+      #
+      unset FILE_LIST
       #
 }  # End of function f_check_version_TEMPLATE.
 #
@@ -480,20 +529,44 @@ f_check_version () {
 # |          Function f_menu_main          |
 # +----------------------------------------+
 #
-#     Rev: 2021-03-07
-#  Inputs: $1 - "text", "dialog" or "whiptail" the preferred user-interface.
-#    Uses: ARRAY_FILE, GENERATED_FILE, MENU_TITLE.
+#     Rev: 2024-01-13
+#  Inputs: $1 - "text", "dialog" or "whiptail" the command-line user-interface in use.
+#    Uses: ARRAY_SOURCE_FILE, GENERATED_FILE, MENU_TITLE, TEMP_FILE,
+#          MAX_LENGTH, MAX_CHOICE_LENGTH, MAX_SUMMARY_LENGTH.
 # Outputs: None.
 #
-# Summary: Display Main-Menu.
-#          This Main Menu function checks its script for the Main Menu
+# Summary: Template for Main-Menu where the ARRAY_SOURCE_FILE can contain data for only 1 menu.
+#          For sub-menus, this template and the sub-menu data must both be in a separate ARRAY_SOURCE_FILE.
+#
+#          Please see f_menu_main_all_menus_TEMPLATE for a much more flexible menu template
+#          for both Main Menus and sub-menus.
+#
+#          This Main Menu function checks the run-time script for the Main Menu
 #          options delimited by "#@@" and if it does not find any, then
 #          it it defaults to the specified library script.
 #
+#          Either the run-time file or library file can contain menu item data for a SINGLE menu only.
+#          With this scheme, a separate library file is needed for each menu (1 menu/1 library file).
+#          So the Main menu data may be either in the run-time script or in a separate library file.
+#
+#          Note: Alternate menu data storage scheme.
+#          For a single library file containg data for multiple menus (many menus/1 library file),
+#          then see f_menu_multiple_TEMPLATE in common_bash_function.lib.
+#
 # Dependencies: f_menu_arrays, f_create_show_menu.
 #
-f_menu_main () { # Create and display the Main Menu.
+# PLEASE NOTE: RENAME THIS FUNCTION WITHOUT SUFFIX "_TEMPLATE" AND COPY
+#              THIS FUNCTION INTO THE MAIN SCRIPT WHICH WILL CALL IT.
+#
+f_menu_main () {
       #
+      # Note: ***If Menu title contains spaces,
+      #       ***the size of the menu window will be too narrow.
+      #
+      # Menu title MUST use underscores instead of spaces.
+      MENU_TITLE="File_Name_Menu"
+      #
+      # Create and display the Main Menu.
       GENERATED_FILE=$THIS_DIR/$THIS_FILE"_menu_main_generated.lib"
       #
       # Does this file have menu items in the comment lines starting with "#@@"?
@@ -502,6 +575,7 @@ f_menu_main () { # Create and display the Main Menu.
       # exit code 0 - menu items in this file.
       #           1 - no menu items in this file.
       #               file name of file containing menu items must be specified.
+      #
       if [ $ERROR -eq 0 ] ; then
          # Extract menu items from this file and insert them into the Generated file.
          # This is required because f_menu_arrays cannot read this file directly without
@@ -509,23 +583,32 @@ f_menu_main () { # Create and display the Main Menu.
          grep ^\#@@ $THIS_DIR/$THIS_FILE >$GENERATED_FILE
          #
          # Specify file name with menu item data.
-         ARRAY_FILE="$GENERATED_FILE"
+         ARRAY_SOURCE_FILE="$GENERATED_FILE"
       else
          #
          #
-         #================================================================================
-         # EDIT THE LINE BELOW TO DEFINE $ARRAY_FILE AS THE ACTUAL FILE NAME (LIBRARY)
-         # WHERE THE MENU ITEM DATA IS LOCATED. THE LINES OF DATA ARE PREFIXED BY "#@@".
-         #================================================================================
+         #==================================================================
+         # EDIT THE LINE BELOW TO DEFINE $ARRAY_FILE AS THE ACTUAL FILE NAME
+         # (LIBRARY) WHERE THE MENU ITEM DATA IS LOCATED. THE LINES OF DATA
+         # ARE PREFIXED BY "#@@".
+         #==================================================================
          #
+         #
+         # Note: Alternate menu data storage scheme.
+         # For a single library file containg data for multiple menus (many menus/1 library file),
+         # then see f_menu_multiple_TEMPLATE in common_bash_function.lib.
          #
          # Specify library file name with menu item data.
+         # Library file contains menu item data for a SINGLE menu only.
+         # With this scheme, a separate library file is needed for each menu (1 menu/1 library file).
+         # So the Main menu data may be either in the run-time script or in a separate library file.
+         #
          # ARRAY_FILE="[FILENAME_GOES_HERE]"
            ARRAY_FILE="$THIS_DIR/dummy_file_name.lib"
       fi
       #
       # Create arrays from data.
-      f_menu_arrays $ARRAY_FILE
+      f_menu_arrays $ARRAY_SOURCE_FILE
       #
       # Calculate longest line length to find maximum menu width
       # for Dialog or Whiptail using lengths calculated by f_menu_arrays.
@@ -533,12 +616,14 @@ f_menu_main () { # Create and display the Main Menu.
       #
       # Create generated menu script from array data.
       #
-      # Note: ***If Menu title contains spaces,
-      #       ***the size of the menu window will be too narrow.
-      #
-      # Menu title MUST use underscores instead of spaces.
-      MENU_TITLE="File_Name_Menu"
       TEMP_FILE=$THIS_DIR/$THIS_FILE"_menu_main_temp.txt"
+      #
+      # ARRAY_FILE is used by f_update_menu_gui and f_update_menu_txt.
+      # It is not included in formal passed parameters but is used anyways
+      # in the $GENERATED_FILE as a line: "source $ARRAY_FILE".
+      # I wanted to retire this variable name, but it has existed in the
+      # common_bash_function.lib library for quite a while.
+      ARRAY_FILE=$GENERATED_FILE
       #
       f_create_show_menu $1 $GENERATED_FILE $MENU_TITLE $MAX_LENGTH $MAX_LINES $MAX_CHOICE_LENGTH $TEMP_FILE
       #
@@ -550,7 +635,7 @@ f_menu_main () { # Create and display the Main Menu.
          rm $TEMP_FILE
       fi
       #
-} # End of function f_menu_main.
+}  # End of function f_menu_main.
 #
 # +----------------------------------------+
 # |  Function fdl_dwnld_file_from_web_site |
@@ -959,12 +1044,60 @@ fdl_download_missing_scripts () {
 #    Uses: None.
 # Outputs: TARGET_DIR.
 #
-# Summary: Display a banner with start times and send to a log file.
+# Summary:  Rename files within a TARGET_DIR without any conditions.
 #
 # Dependencies: None
 #
 f_main_start () {
-     #
+      #
+      #
+      # Is the command "rename" available?
+      f_check_command_rename $1
+      #
+      f_select_dir $1 "Select_Directory" $THIS_DIR 1
+      DIR_LIST=$ANS
+      #
+      for SELECT_DIR in $DIR_LIST
+          do
+             # Set TARGET_DIR to the selected directory.
+             # Delete any trailing "/" in directory string.
+             TARGET_DIR=$(echo $SELECT_DIR | sed 's|/$||')
+             #
+             # Start renaming files within TARGET_DIR.
+                f_main_action $1 $TARGET_DIR
+          done
+      #
+      # Discard variables.
+      unset DIR_LIST SELECT_DIR TARGET_DIR
+      #
+} # End of function f_main_start.
+#
+# +----------------------------------------+
+# |          Function f_quick_start        |
+# +----------------------------------------+
+#
+#  Inputs: $1=GUI.
+#          THIS_DIR.
+#    Uses: None.
+# Outputs: TARGET_DIR.
+#
+# Summary: In order to speed up the renaming process, rename files within a
+#          TARGET_DIR only if one or more file names include spaces.
+#          In other words, skip any TARGET_DIR where the file names
+#          do not contain any spaces.
+#
+#          Warning: Less common file naming errors may be ignored.
+#                   i.e. The file name "Hello%$There" will not be renamed
+#                        since it does not contain any spaces, even though
+#                        it should be renamed.
+#
+# Dependencies: None
+#
+f_quick_start () {
+      #
+      # Is the command "rename" available?
+      f_check_command_rename $1
+      #
       f_select_dir $1 "Select_Directory" $THIS_DIR 0
       DIR_LIST=$ANS
       #
@@ -975,13 +1108,21 @@ f_main_start () {
              TARGET_DIR=$(echo $SELECT_DIR | sed 's|/$||')
              #
              # Start renaming files within TARGET_DIR.
-             f_main_action $1 $TARGET_DIR
+
+             # Are there any file names containing spaces?
+             find $TARGET_DIR -name *\ \*
+             ERROR=$?
+             #
+             if [ "$ERROR" -eq 0 ] ; then
+                # Yes, file names contain spaces.
+                f_main_action $1 $TARGET_DIR
+             fi
           done
       #
       # Discard variables.
       unset DIR_LIST SELECT_DIR TARGET_DIR
       #
-} # End of function f_main_start.
+} # End of function f_quick_start.
 #
 # +----------------------------------------+
 # |         Function f_main_action         |
@@ -993,15 +1134,13 @@ f_main_start () {
 # Outputs: None.
 #
 # Summary: Rename files, display progress banner.
+#          Display a banner with start times and send to a log file.
 #
 # Dependencies: rename.
 #
 f_main_action () {
 #
 LOG_FILE="file_rename_$(date +%Y-%m-%d-%H%M.%S%N).log"
-#
-# Is the command "rename" available?
-f_check_command_rename $1
 #
 # Blank the screen.
 clear
@@ -1020,6 +1159,7 @@ date | tee -a $LOG_FILE
 # & ampersand      * asterisk             ' single quotes      | pipe
 # { left bracket   ? question mark        " double quotes      = equal sign
 # } right bracket  blank spaces           : colon              @ at sign
+# ; semi-colon
 #
 # File names must not begin or end with a <space>, <period>, <hyphen>, or <underline>
 # File names should be shorter than 31 characters for compatibility with older (1950-1990's) Operating Systems.
@@ -1035,142 +1175,140 @@ date | tee -a $LOG_FILE
 # The order of operations below is important especially for the "find and replace" operations.
 #
 # 1. Replace <colon><space> with <two-dashes> in file name.
-f_banner "33 of 33 Replace <colon><space> with <two-dashes> in $2/file name."
+f_banner "01 of 34 Replace <colon><space> with <two-dashes> in $2/file name."
 rename -verbose 's/: /--/g' $2/* |  tee -a $LOG_FILE
 #
 # 2. Replace <colon> with <underscore> in file name.
-f_banner "32 of 33 Replace <colon> with <underscore> in $2/file name."
+f_banner "02 of 34 Replace <colon> with <underscore> in $2/file name."
 rename -verbose 's/:/_/g' $2/* |  tee -a $LOG_FILE
 #
 # 3. Replace <space> with <underscore> in file name.
-f_banner "31 of 33 Replace <space> with <underscore> in $2/file name."
+f_banner "03 of 34 Replace <space> with <underscore> in $2/file name."
 rename -verbose 's/ /_/g' $2/* |  tee -a $LOG_FILE
 #
 # 4. Replace <double-dash> with <two-dashes> in file name.
-f_banner "30 of 33 Replace <double-dash> with <two-dashes> in $2/file name."
+f_banner "04 of 34 Replace <double-dash> with <two-dashes> in $2/file name."
 rename -verbose 's/—/--/g' $2/* |  tee -a $LOG_FILE
 #
 # 5. Remove <exclamation-mark> in file name.
-f_banner "29 of 33 Remove <exclamation-mark> in $2/file name."
+f_banner "05 of 34 Remove <exclamation-mark> in $2/file name."
 rename -verbose 's/!//g' $2/* |  tee -a $LOG_FILE
 #
 # 6. Remove <question-mark> in file name.
-f_banner "28 of 33 Remove <question-mark> in $2/file name."
+f_banner "06 of 34 Remove <question-mark> in $2/file name."
 rename -verbose 's/\?//g' $2/* |  tee -a $LOG_FILE
 #
 # 7. Remove <percent-sign> in file name.
-f_banner "27 of 33 Remove <percent-sign> in $2/file name."
+f_banner "07 of 34 Remove <percent-sign> in $2/file name."
 rename -verbose 's/%//g' $2/* |  tee -a $LOG_FILE
 #
 # 8. Remove <ampersand> in file name.
-f_banner "26 of 33 Remove <ampersand> in $2/file name."
+f_banner "08 of 34 Remove <ampersand> in $2/file name."
 rename -verbose 's/\&//g' $2/* |  tee -a $LOG_FILE
 #
 # 9. Remove <single-quote> in file name.
-f_banner "25 of 33 Remove <single-quote> in $2/file name."
+f_banner "09 of 34 Remove <single-quote> in $2/file name."
 rename "s/\'//g" $2/* |  tee -a $LOG_FILE
 #
 # 10. Remove <single-right-quote> in file name.
-f_banner "24 of 33 Remove <single-right-quote> in $2/file name."
+f_banner "10 of 34 Remove <single-right-quote> in $2/file name."
 rename -verbose 's/’//g' $2/* |  tee -a $LOG_FILE
 #
 # 11. Remove <double-quote> in file name.
-f_banner "23 of 33 Remove <double-quote> in $2/file name."
+f_banner "11 of 34 Remove <double-quote> in $2/file name."
 rename -verbose 's/\"//g' $2/* |  tee -a $LOG_FILE
 #
 # 12. Remove <right-double-quote> in file name.
-f_banner "22 of 33 Remove <right-double-quote> in $2/file name."
+f_banner "12 of 34 Remove <right-double-quote> in $2/file name."
 rename -verbose 's/”//g' $2/* |  tee -a $LOG_FILE
 #
 # 13. Remove <left-double-quote> in file name.
-f_banner "21 of 33 Remove <left-double-quote> in $2/file name."
+f_banner "13 of 34 Remove <left-double-quote> in $2/file name."
 rename -verbose 's/“//g' $2/* |  tee -a $LOG_FILE
 #
 # 14. Replace <underscore-period>  with <period> in file name.
-f_banner "20 of 33 Replace <underscore-period>  with <period> in $2/file name."
+f_banner "14 of 34 Replace <underscore-period>  with <period> in $2/file name."
 rename -verbose 's/_\././g' $2/* |  tee -a $LOG_FILE
 #
 # 15. Replace <triple-underscore> with <underscore> in file name.
-f_banner "19 of 33 Replace <triple-underscore> with <underscore> in $2/file name."
+f_banner "15 of 34 Replace <triple-underscore> with <underscore> in $2/file name."
 rename -verbose 's/___/_/g' $2/* |  tee -a $LOG_FILE
 #
 # 16. Replace <double-underscore> with <underscore> in file name.
-f_banner "18 of 33 Replace <double-underscore> with <underscore> in $2/file name."
+f_banner "16 of 34 Replace <double-underscore> with <underscore> in $2/file name."
 rename -verbose 's/__/_/g' $2/* |  tee -a $LOG_FILE
 #
 # 17. Repeat Replace <double-underscore> with <underscore> in file name.
-f_banner "17 of 33 Repeat Replace <double-underscore> with <underscore> in $2/file name."
+f_banner "17 of 34 Repeat Replace <double-underscore> with <underscore> in $2/file name."
 rename -verbose 's/__/_/g' $2/* |  tee -a $LOG_FILE
 #
 # 18. Replace <two-dashes><underscore> with <two-dashes> in file name.
-f_banner "16 of 33 Replace <two-dashes><underscore> with <two-dashes> in $2/file name."
+f_banner "18 of 34 Replace <two-dashes><underscore> with <two-dashes> in $2/file name."
 rename -verbose 's/--_/--/g' $2/* |  tee -a $LOG_FILE
 #
 # 19. Replace <underscore><two-dashes> with <two-dashes> in file name.
-f_banner "15 of 33 Replace <underscore><two-dashes> with <two-dashes> in $2/file name."
+f_banner "19 of 34 Replace <underscore><two-dashes> with <two-dashes> in $2/file name."
 rename -verbose 's/_--/--/g' $2/* |  tee -a $LOG_FILE
 #
 # 20. Remove <right-bracket> in file name.
-f_banner "14 of 33 Remove <right-bracket> in $2/file name."
+f_banner "20 of 34 Remove <right-bracket> in $2/file name."
 rename -verbose 's/\}//g' $2/* |  tee -a $LOG_FILE
 #
 # 21. Remove <left-bracket> in file name.
-f_banner "13 of 33 Remove <left-bracket> in $2/file name."
+f_banner "21 of 34 Remove <left-bracket> in $2/file name."
 rename -verbose 's/\{//g' $2/* |  tee -a $LOG_FILE
 #
-# 22. NEVER Remove <forward-slash> in file name. It will change directory of file.
-f_banner "12 of 33 NEVER Remove <forward-slash> in $2/file name."
-#rename -verbose 's/\///g' $2/* |  tee -a $LOG_FILE
+# 22. Remove <semi-colon> in file name.
+f_banner "22 of 34 Remove <semi-colon> in $2/file name."
+rename -verbose 's/\;//g' $2/* |  tee -a $LOG_FILE
 #
-# 23. NEVER Remove <back-slash> in file name. It will change directory of file.
-f_banner "11 of 33 NEVER Remove <back-slash> in $2/file name."
-#rename -verbose 's/\\//g' $2/* |  tee -a $LOG_FILE
-#
-# 24. Remove <right-angle-bracket> in file name.
-f_banner "10 of 33 Remove <right-angle-bracket> in $2/file name."
+# 23. Remove <right-angle-bracket> in file name.
+f_banner "23 of 34 Remove <right-angle-bracket> in $2/file name."
 rename -verbose 's/\>//g' $2/* |  tee -a $LOG_FILE
 #
-# 25. Remove <left-angle-bracket> in file name.
-f_banner "09 of 33 Remove <left-angle-bracket> in $2/file name."
+# 24. Remove <left-angle-bracket> in file name.
+f_banner "24 of 34 Remove <left-angle-bracket> in $2/file name."
 rename -verbose 's/\<//g' $2/* |  tee -a $LOG_FILE
 #
-# 26. Remove <asterisk> in file name.
-f_banner "08 of 33 Remove <asterisk> in $2/file name."
+# 25. Remove <asterisk> in file name.
+f_banner "25 of 34 Remove <asterisk> in $2/file name."
 rename -verbose 's/\*//g' $2/* |  tee -a $LOG_FILE
 #
-# 27. Remove <dollar sign> in file name.
-f_banner "07 of 33 Remove <dollar sign> in $2/file name."
+# 26. Remove <dollar sign> in file name.
+f_banner "26 of 34 Remove <dollar sign> in $2/file name."
 rename -verbose 's/\$//g' $2/* |  tee -a $LOG_FILE
 #
-# 28. Remove <at sign> in file name.
-f_banner "06 of 33 Remove <at sign> in $2/file name."
+# 27. Remove <at sign> in file name.
+f_banner "27 of 34 Remove <at sign> in $2/file name."
 rename -verbose 's/\@//g' $2/* |  tee -a $LOG_FILE
 #
-# 29. Remove <pound sign> in file name.
-f_banner "05 of 33 Remove <pound sign> in $2/file name."
+# 28 Remove <pound sign> in file name.
+f_banner "28 of 34 Remove <pound sign> in $2/file name."
 rename -verbose 's/\#//g' $2/* |  tee -a $LOG_FILE
 #
-# 30. Remove <plus sign> in file name.
-f_banner "04 of 33 Remove <plus sign> in $2/file name."
+# 29. Remove <plus sign> in file name.
+f_banner "29 of 34 Remove <plus sign> in $2/file name."
 rename -verbose 's/\+//g' $2/* |  tee -a $LOG_FILE
 #
-# 31. Remove <equal sign> in file name.
-f_banner "03 of 33 Remove <equal sign> in $2/file name."
+# 30. Remove <equal sign> in file name.
+f_banner "30 of 34 Remove <equal sign> in $2/file name."
 rename -verbose 's/\=//g' $2/* |  tee -a $LOG_FILE
 #
-# 32. Remove <pipe sign> in file name.
-f_banner "02 of 33 Replace <pipe sign> with <underscore> in $2/file name."
+# 31. Remove <pipe sign> in file name.
+f_banner "31 of 34 Replace <pipe sign> with <underscore> in $2/file name."
 rename -verbose 's/\|/_/g' $2/* |  tee -a $LOG_FILE
 #
-# 33. Remove <back-tick sign> in file name.
-f_banner "01 of 31 Remove <back-tick sign> in $2/file name."
+# 32. Remove <back-tick sign> in file name.
+f_banner "32 of 34 Remove <back-tick sign> in $2/file name."
 rename -verbose 's/\`//g' $2/* |  tee -a $LOG_FILE
 #
-# 34. Remove <square brackets> in file name.
+# 33. Remove <back-tick sign> in file name.
+f_banner "33 of 34 Remove <back-tick sign> in $2/file name."
 rename -verbose 's/\[//g' $2/* |  tee -a $LOG_FILE
 rename -verbose 's/\]//g' $2/* |  tee -a $LOG_FILE
 #
-# 35. Remove <parenthesis> in file name.
+# 34. Remove <parenthesis> in file name.
+f_banner "34 of 34 Remove <parenthesis> in $2/file name."
 rename -verbose 's/\(//g' $2/* |  tee -a $LOG_FILE
 rename -verbose 's/\)//g' $2/* |  tee -a $LOG_FILE
 #
@@ -1189,7 +1327,7 @@ fi
 # |            Function f_banner           |
 # +----------------------------------------+
 #
-#  Inputs: $1=String, LOG_FILE.
+#  Inputs: $1 - String, LOG_FILE.
 #    Uses: None.
 # Outputs: None.
 #

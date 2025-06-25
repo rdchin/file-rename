@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# ©2024 Copyright 2024 Robert D. Chin
+# ©2025 Copyright 2025 Robert D. Chin
 # Email: RDevChin@Gmail.com
 #
 #   Usage: bash file_recursive_rename.sh <TARGET DIRECTORY>
@@ -48,7 +48,7 @@
 # |        Default Variable Values         |
 # +----------------------------------------+
 #
-VERSION="2024-01-20 22:30"
+VERSION="2025-06-14 18:03"
 THIS_FILE="file_recursive_rename.sh"
 REQUIRED_FILE="file_rename.sh"
 #
@@ -207,6 +207,14 @@ FILE_DL_LIST=$THIS_FILE"_file_dl_temp.txt"
 ##
 ## CODE HISTORY
 ##
+## 2025-06-13 *f_main_start changed f_select_dir arguments to select
+##             only a single directory.
+##            *f_main_action fixed f_text_editor arguments.
+##            *f_select_dir deleted in favor of common_library version.
+##            *f_display_common updated to latest version.
+##
+## 2024-02-03 *f_main_action commented out more interactive actions.
+##
 ## 2024-01-20 *Update copyright 2024.
 ##
 ## 2023-05-04 *f_main_action commented out the interactive question to
@@ -272,18 +280,26 @@ FILE_DL_LIST=$THIS_FILE"_file_dl_temp.txt"
 # |     Function f_display_common      |
 # +------------------------------------+
 #
-#     Rev: 2021-03-31
-#  Inputs: $1=UI - "text", "dialog" or "whiptail" the preferred user-interface.
-#          $2=Delimiter of text to be displayed.
-#          $3="NOK", "OK", or null [OPTIONAL] to control display of "OK" button.
-#          $4=Pause $4 seconds [OPTIONAL]. If "NOK" then pause to allow text to be read.
+#     Rev: 2024-02-24
+#  Inputs: $1 - "text", "dialog" or "whiptail" the command-line user-interface in use.
+#          $2 - Delimiter of text to be displayed.
+#          $3 - [OPTIONAL] to control display of prompt to continue.
+#                          null (Default) - "OK" button or text prompt, display until either Enter key or "OK" button is pressed.
+#                          "OK"           - "OK" button or text prompt, display until either Enter key or "OK" button is pressed.
+#                          "NOK"          - No "OK" button or text prompt, display for $3 seconds before continuing automatically.
+#          $4 - [OPTIONAL] to control pause duration. Only used if $3="NOK".
+#                          $4 seconds pause to allow text to be read before continuing automatically.
 #          THIS_DIR, THIS_FILE, VERSION.
 #    Uses: X.
 # Outputs: None.
 #
-# Synopsis: Display lines of text beginning with a given comment delimiter.
+# Summary: Display lines of text beginning with a given comment delimiter.
 #
 # Dependencies: f_message.
+#
+# PLEASE NOTE: RENAME THIS FUNCTION WITHOUT SUFFIX "_TEMPLATE" AND COPY
+#              THIS FUNCTION INTO ANY SCRIPT WHICH DEPENDS ON THE
+#              LIBRARY FILE "common_bash_function.lib".
 #
 f_display_common () {
       #
@@ -308,7 +324,7 @@ f_display_common () {
       THIS_FILE="file_recursive_rename.sh"  # <<<--- INSERT ACTUAL FILE NAME HERE.
       #
       TEMP_FILE=$THIS_DIR/$THIS_FILE"_temp.txt"
-      #
+            #
       # Set $VERSION according as it is set in the beginning of $THIS_FILE.
       X=$(grep --max-count=1 "VERSION" $THIS_FILE)
       # X="VERSION=YYYY-MM-DD HH:MM"
@@ -321,7 +337,7 @@ f_display_common () {
       # Display text (all lines beginning ("^") with $2 but do not print $2).
       # sed substitutes null for $2 at the beginning of each line
       # so it is not printed.
-      sed -n "s/$2//"p $THIS_DIR/$THIS_FILE >> $TEMP_FILE
+      sed --silent "s/$2//p" $THIS_DIR/$THIS_FILE >> $TEMP_FILE
       #
       case $3 in
            "NOK" | "nok")
@@ -338,11 +354,15 @@ f_display_common () {
 # |        Function f_check_version        |
 # +----------------------------------------+
 #
-#     Rev: 2021-03-25
-#  Inputs: $1 - UI "dialog" or "whiptail" or "text".
+#     Rev: 2024-02-22
+#  Inputs: $1 - "text", "dialog" or "whiptail" the command-line user-interface in use.
 #          $2 - [OPTIONAL] File name to compare.
+#          $3 - [OPTIONAL] to control display of messages and interactive user questions.
+#                          null (default) - Display error and status messages and interactive user questions.
+#                          1              - Display error messages only (Silent mode).
 #          FILE_TO_COMPARE.
-#    Uses: SERVER_DIR, MP_DIR, TARGET_DIR, TARGET_FILE, VERSION, TEMP_FILE, ERROR.
+#    Uses: SERVER_DIR, MP_DIR, LOCAL_REPO_DIR, $FILE_TO_COMPARE, FILE_LIST,
+#          VERSION, TEMP_FILE, ERROR.
 # Outputs: ERROR.
 #
 # Summary: Check the version of a single, local file or script,
@@ -354,6 +374,10 @@ f_display_common () {
 #          connect to repository on the web if available.
 #
 # Dependencies: f_version_compare.
+#
+# PLEASE NOTE: RENAME THIS FUNCTION WITHOUT SUFFIX "_TEMPLATE" AND COPY
+#              THIS FUNCTION INTO ANY SCRIPT WHICH DEPENDS ON THE
+#              LIBRARY FILE "common_bash_function.lib".
 #
 f_check_version () {
       #
@@ -367,11 +391,15 @@ f_check_version () {
       #
       # LAN File Server shared directory.
       # SERVER_DIR="[FILE_SERVER_DIRECTORY_NAME_GOES_HERE]"
-        SERVER_DIR="//scotty/files"
+      if [ -z "$SERVER_DIR" ] ; then
+         SERVER_DIR="//scotty/files"
+      fi
       #
       # Local PC mount-point directory.
       # MP_DIR="[LOCAL_MOUNT-POINT_DIRECTORY_NAME_GOES_HERE]"
+      if [ -z "$MP_DIR" ] ; then
         MP_DIR="/mnt/scotty/files"
+      fi
       #
       # Local PC mount-point with LAN File Server Local Repository full directory path.
       # Example:
@@ -381,7 +409,9 @@ f_check_version () {
       #
       # Local PC mount-point with LAN File Server Local Repository full directory path.
       # LOCAL_REPO_DIR="$MP_DIR/[DIRECTORY_PATH_TO_LOCAL_REPOSITORY]"
-        LOCAL_REPO_DIR="$MP_DIR/LIBRARY/PC-stuff/PC-software/BASH_Scripting_Projects/Repository"
+      if [ -z "$LOCAL_REPO_DIR" ] ; then
+         LOCAL_REPO_DIR="$MP_DIR/LIBRARY/PC-stuff/PC-software/BASH_Scripting_Projects/Repository"
+      fi
       #
       # Local PC file to be compared.
       if [ $# -eq 2 ] ; then
@@ -402,6 +432,15 @@ f_check_version () {
       FILE_LIST=$THIS_DIR/$THIS_FILE"_file_temp.txt"
       ERROR=0
       #
+      # Delete any existing file.
+      # This assures that FILE_LIST is not appended to but is newly created
+      # in the code below. Added because typo may occur when using redirection
+      # where typo ">>" is used instead of ">" at FILE NAME1.
+      # i.e. typo at echo "[ FILE NAME1 GOES HERE ]"  >> $FILE_LIST
+      if [ -e $FILE_LIST ] ; then
+         rm $FILE_LIST
+      fi
+      #
       #
       #=================================================================
       # EDIT THE LINES BELOW TO SPECIFY THE FILE NAMES TO UPDATE.
@@ -415,32 +454,56 @@ f_check_version () {
       echo "file_rename.sh"           >> $FILE_LIST  # <<<--- INSERT ACTUAL FILE NAME HERE.
       echo "common_bash_function.lib" >> $FILE_LIST  # <<<--- INSERT ACTUAL FILE NAME HERE.
       #
-      f_version_compare $1 $SERVER_DIR $MP_DIR $LOCAL_REPO_DIR $FILE_TO_COMPARE "$VERSION" $FILE_LIST
+      f_version_compare $1 "$SERVER_DIR" "$MP_DIR" "$LOCAL_REPO_DIR" "$FILE_TO_COMPARE" "$VERSION" "$FILE_LIST" "$3"
       #
-      if [ -e $FILE_LIST ] ; then
-         rm $FILE_LIST
+      if [ -r  $FILE_LIST ] ; then
+         rm  $FILE_LIST
       fi
       #
-}  # End of function f_check_version_TEMPLATE.
+}  # End of function f_check_version
 #
 # +----------------------------------------+
 # |          Function f_menu_main          |
 # +----------------------------------------+
 #
-#     Rev: 2021-03-07
-#  Inputs: $1 - "text", "dialog" or "whiptail" the preferred user-interface.
-#    Uses: ARRAY_FILE, GENERATED_FILE, MENU_TITLE.
+#     Rev: 2024-01-13
+#  Inputs: $1 - "text", "dialog" or "whiptail" the command-line user-interface in use.
+#    Uses: ARRAY_SOURCE_FILE, GENERATED_FILE, MENU_TITLE, TEMP_FILE,
+#          MAX_LENGTH, MAX_CHOICE_LENGTH, MAX_SUMMARY_LENGTH.
 # Outputs: None.
 #
-# Summary: Display Main-Menu.
-#          This Main Menu function checks its script for the Main Menu
+# Summary: Template for Main-Menu where the ARRAY_SOURCE_FILE can contain data for only 1 menu.
+#          For sub-menus, this template and the sub-menu data must both be in a separate ARRAY_SOURCE_FILE.
+#
+#          Please see f_menu_main_all_menus_TEMPLATE for a much more flexible menu template
+#          for both Main Menus and sub-menus.
+#
+#          This Main Menu function checks the run-time script for the Main Menu
 #          options delimited by "#@@" and if it does not find any, then
 #          it it defaults to the specified library script.
 #
+#          Either the run-time file or library file can contain menu item data for a SINGLE menu only.
+#          With this scheme, a separate library file is needed for each menu (1 menu/1 library file).
+#          So the Main menu data may be either in the run-time script or in a separate library file.
+#
+#          Note: Alternate menu data storage scheme.
+#          For a single library file containg data for multiple menus (many menus/1 library file),
+#          then see f_menu_multiple_TEMPLATE in common_bash_function.lib.
+#
 # Dependencies: f_menu_arrays, f_create_show_menu.
+#
+# PLEASE NOTE: RENAME THIS FUNCTION WITHOUT SUFFIX "_TEMPLATE" AND COPY
+#              THIS FUNCTION INTO THE MAIN SCRIPT WHICH WILL CALL IT.
 #
 f_menu_main () { # Create and display the Main Menu.
       #
+      # Note: ***If Menu title contains spaces,
+      #       ***the size of the menu window will be too narrow.
+      #
+      # Menu title MUST use underscores instead of spaces.
+      MENU_TITLE="Recursive_Rename_Menu"
+      #
+      # Create and display the Main Menu.
       GENERATED_FILE=$THIS_DIR/$THIS_FILE"_menu_main_generated.lib"
       #
       # Does this file have menu items in the comment lines starting with "#@@"?
@@ -449,6 +512,7 @@ f_menu_main () { # Create and display the Main Menu.
       # exit code 0 - menu items in this file.
       #           1 - no menu items in this file.
       #               file name of file containing menu items must be specified.
+      #
       if [ $ERROR -eq 0 ] ; then
          # Extract menu items from this file and insert them into the Generated file.
          # This is required because f_menu_arrays cannot read this file directly without
@@ -460,13 +524,22 @@ f_menu_main () { # Create and display the Main Menu.
       else
          #
          #
-         #================================================================================
-         # EDIT THE LINE BELOW TO DEFINE $ARRAY_FILE AS THE ACTUAL FILE NAME (LIBRARY)
-         # WHERE THE MENU ITEM DATA IS LOCATED. THE LINES OF DATA ARE PREFIXED BY "#@@".
-         #================================================================================
+         #==================================================================
+         # EDIT THE LINE BELOW TO DEFINE $ARRAY_FILE AS THE ACTUAL FILE NAME
+         # (LIBRARY) WHERE THE MENU ITEM DATA IS LOCATED. THE LINES OF DATA
+         # ARE PREFIXED BY "#@@".
+         #==================================================================
          #
+         #
+         # Note: Alternate menu data storage scheme.
+         # For a single library file containg data for multiple menus (many menus/1 library file),
+         # then see f_menu_multiple_TEMPLATE in common_bash_function.lib.
          #
          # Specify library file name with menu item data.
+         # Library file contains menu item data for a SINGLE menu only.
+         # With this scheme, a separate library file is needed for each menu (1 menu/1 library file).
+         # So the Main menu data may be either in the run-time script or in a separate library file.
+         #
          # ARRAY_FILE="[FILENAME_GOES_HERE]"
            ARRAY_FILE="$THIS_DIR/dummy_file_name.lib"
       fi
@@ -480,20 +553,22 @@ f_menu_main () { # Create and display the Main Menu.
       #
       # Create generated menu script from array data.
       #
-      # Note: ***If Menu title contains spaces,
-      #       ***the size of the menu window will be too narrow.
-      #
-      # Menu title MUST use underscores instead of spaces.
-      MENU_TITLE="Recursive_Rename_Menu"
       TEMP_FILE=$THIS_DIR/$THIS_FILE"_menu_main_temp.txt"
+      #
+      # ARRAY_FILE is used by f_update_menu_gui and f_update_menu_txt.
+      # It is not included in formal passed parameters but is used anyways
+      # in the $GENERATED_FILE as a line: "source $ARRAY_FILE".
+      # I wanted to retire this variable name, but it has existed in the
+      # common_bash_function.lib library for quite a while.
+      ARRAY_FILE=$GENERATED_FILE
       #
       f_create_show_menu $1 $GENERATED_FILE $MENU_TITLE $MAX_LENGTH $MAX_LINES $MAX_CHOICE_LENGTH $TEMP_FILE
       #
-      if [ -e $GENERATED_FILE ] ; then
+      if [ -r $GENERATED_FILE ] ; then
          rm $GENERATED_FILE
       fi
       #
-      if [ -e $TEMP_FILE ] ; then
+      if [ -r $TEMP_FILE ] ; then
          rm $TEMP_FILE
       fi
       #
@@ -898,99 +973,6 @@ fdl_download_missing_scripts () {
 } # End of function fdl_download_missing_scripts.
 #
 # +----------------------------------------+
-# |          Function f_select_dir         |
-# +----------------------------------------+
-#
-#  Inputs: $1=GUI, THIS_DIR.
-#          $2=String "[City/Town] Directory"
-#          $3=Default parent directory.
-#    Uses: TEMP_FILE, ANS, ERROR, SCRIPT_LIST.
-# Outputs: ANS (List of selected files), ERROR.
-#
-# Summary: Prompt user-entered directory name.
-#
-# Dependencies: f_yn_question, f_message.
-#
-f_select_dir () {
-      #
-      # Get the screen resolution or X-window size.
-      # Get rows (height).
-      YSCREEN=$(stty size | awk '{ print $1 }')
-      # Get columns (width).
-      XSCREEN=$(stty size | awk '{ print $2 }')
-      #
-      # Reset ERROR for while-loop to work.
-      ERROR=0
-      #
-      # Initialize variables.
-      DIR=""
-      ANS=""
-      #
-      # Format string substitute underscores for spaces.
-      DIR_STR=$(echo $2 | tr "_" " ")
-      #
-      case $1 in
-           dialog)
-              while [ "$ERROR" -eq 0 ]
-                    do
-                       # Dialog needs about 6 more lines for the header and [OK] button.
-                       let Y=$YSCREEN-16
-                       # If number of lines exceeds screen/window height then set textbox height.
-                       #
-                       # Dialog needs about 10 more spaces for the right and left window frame.
-                       let X=$XSCREEN-10
-                       #
-                       DIR=$($1 --stdout --title "Use <tab>, <up/down arrows> and <spacebar> to select a $DIR_STR." --backtitle "Please choose a $DIR_STR" --ok-label "Choose $DIR_STR" --cancel-label "Done choosing" --dselect $3 $Y $X)
-                       ERROR=$?
-                       #
-                       if [ "$ERROR" -eq 0 ] && [ -d $DIR ] ; then
-                          f_yn_question $1 "Y" "Confirm $DIR_STR name" "$DIR_STR name: $DIR\n\nIs the $DIR_STR name correct?"
-                          #
-                          if [ "$ANS" -ne 1 ] ; then
-                             # Yes, $DIR_STR name is correct. Note: $DIR includes "Directory Name".
-                             # Output selected Directory Name to $ANS.
-                             ANS=$DIR
-                             #
-                             f_message $1 "NOK" "Directory Entered" "Directory name accepted. Enter next directory name or press \"Exit\" button.\n\n$DIR" 2
-                          fi
-                       fi
-                    done
-              #
-              # Reset ERROR since on exiting WHILE-loop it will always be EXIT=1.
-              ERROR=0
-              #
-           ;;
-           whiptail)
-              # User-input via "inputbox" free-form directory name entry.
-              $1 --title "User-entered $DIR_STR" --cancel-button "Exit" --inputbox "Enter $DIR_STR name:" 8 70 $3 2>$TEMP_FILE
-              ERROR=$?
-              ANS=$(cat $TEMP_FILE)
-              #
-           ;;
-           text)
-              ERROR=0
-              # The user-entered directory name is whatever is after $3 default parent directory.
-              echo "User-entered $DIR_STR name"
-              echo
-              echo -n "Enter $DIR_STR name(s): $3/"
-              read ANS
-              #
-              # String $3 includes a trailing "/".
-              ANS=$3$ANS
-              #
-              if [ -z "$ANS" ] ; then
-                 ERROR=1
-              fi
-           ;;
-      esac
-      #
-      if [ "$ERROR" -eq 1 ] ; then
-         return 1  # Return to Main Menu.
-      fi
-      #
-} # End of function f_select_dir.
-#
-# +----------------------------------------+
 # |          Function f_main_start         |
 # +----------------------------------------+
 #
@@ -1005,7 +987,7 @@ f_select_dir () {
 #
 f_main_start () {
         #
-      f_select_dir $1 "Select_Directory" $THIS_DIR 0
+      f_select_dir $1 "Select_Directory" $THIS_DIR 1
       #
       # Set RECURSIVE_DIR_LIST to the selected directory.
       RECURSIVE_DIR_LIST=$ANS
@@ -1097,7 +1079,7 @@ f_main_action () {
       f_message $1 "OK" "Edit Directory List" "Next open an editor to exclude any directories that you want to skip (the renaming of files)."
       #
       # Edit list of directories.
-      f_text_editor $1 "List_of_Directories_for_file_renaming" "/home/robert" $THIS_DIR/$THIS_FILE"_Directory_list.txt" 1
+      f_text_editor $1 "List_of_Directories_for_file_renaming" "/home/$USER" $THIS_FILE"_Directory_list.txt" 1
       #
       echo >> $LOG_FILE
       echo "List of Directories for file renaming." | tee -a $LOG_FILE
@@ -1154,10 +1136,11 @@ f_main_action () {
       cp $LOG_FILE $TEMP_FILE
       #
       # Display Log file.
-      f_message $1 "OK" "Display Summary Log File" $TEMP_FILE
+      #f_message $1 "OK" "Display Summary Log File" $TEMP_FILE
       #
       # Ask user to delete log files.
-      f_yn_question $1 "N" "Delete Log File?" "Delete current summary log file of actions?"
+      #f_yn_question $1 "N" "Delete Log File?" "Delete current summary log file of actions?"
+      ANS=1
       case $ANS in
            0)
               # Delete log file.
@@ -1191,7 +1174,7 @@ f_main_action () {
 # |      Function f_check_command_rename   |
 # +----------------------------------------+
 #
-#  Inputs: $1=GUI.
+#  Inputs: $1 - "text", "dialog" or "whiptail" the command-line user-interface in use.
 #    Uses: ERROR.
 # Outputs: None.
 #
